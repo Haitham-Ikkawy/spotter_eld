@@ -1,0 +1,15 @@
+ipython
+Django
+mongoengine
+redis
+Pillow
+phonenumbers
+requests
+mysqlclient
+django-cors-headers
+pytz
+django-cors-headers
+django-compressor
+sentry-sdk
+djangorestframework
+djangorestframework-simplejwt
