@@ -92,6 +92,7 @@ function Navbar() {
                         <Typography variant="h6">ELD App</Typography>
                     </div>
                     <List>
+
                         {menuItems.map((item) => (
                             <ListItem key={item.text} disablePadding>
                                 <ListItemButton
