@@ -1,26 +1,31 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {createContext, useContext, useEffect, useState} from "react";
+import {useMediaQuery, useTheme} from "@mui/material";
 
 const LandingContext = createContext();
 
-export const LandingContextProvider = ({ children }) => {
-  // Initialize isAuth from localStorage
-  const [isAuth, setIsAuth] = useState(() => !!localStorage.getItem("access_token"));
+export const LandingContextProvider = ({children}) => {
 
-  useEffect(() => {
-    setIsAuth(!!localStorage.getItem("access_token"));
-  }, []);
+    const theme = useTheme();
 
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    setIsAuth(false);
-  };
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    // Initialize isAuth from localStorage
+    const [isAuth, setIsAuth] = useState(() => !!localStorage.getItem("access_token"));
 
-  return (
-    <LandingContext.Provider value={{ isAuth, setIsAuth, logout }}>
-      {children}
-    </LandingContext.Provider>
-  );
+    useEffect(() => {
+        setIsAuth(!!localStorage.getItem("access_token"));
+    }, []);
+
+    const logout = () => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setIsAuth(false);
+    };
+
+    return (
+        <LandingContext.Provider value={{isAuth, setIsAuth, logout, isMobile}}>
+            {children}
+        </LandingContext.Provider>
+    );
 };
 
 export const useLanding = () => useContext(LandingContext);

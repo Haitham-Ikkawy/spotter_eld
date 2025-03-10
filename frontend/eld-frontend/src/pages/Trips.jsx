@@ -1,8 +1,11 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Container, FormControl, InputLabel, MenuItem, Modal, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from "@mui/material";
+import {Box, Button, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
 import {GetTrips, GetTripsFormData, insertTrips} from "../services/Api.js";
 import {toast} from "react-toastify";
+import ModalLayout from "../components/modals/ModalLayout.jsx";
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import Constants from "../common/constants.js";
 
 function Trips() {
 
@@ -44,15 +47,6 @@ function Trips() {
     }, [modalOpened]);
 
 
-    // const handleDriverChange = (e) => {
-    //     const selectedDriverId = e.target.value;
-    //     setNewTrip({...newTrip, driver: selectedDriverId});
-    //
-    //     const selectedDriver = drivers.find((d) => d.id === selectedDriverId);
-    //     if (selectedDriver) {
-    //         setNewTrip((prev) => ({...prev, current_cycle_used: selectedDriver.current_cycle_used || 0}));
-    //     }
-    // };
     const getTripsFn = () => {
         GetTrips({})
             .then((response) => {
@@ -72,11 +66,11 @@ function Trips() {
                     setNewTrip((prev) => ({...prev, start_location: location}));
                 },
                 (error) => {
-                    toast.error("Failed to detect location");
+                    toast.error(Constants.TOASTS.ERROR.LOCATION_DETECTION_FAILED);
                 }
             );
         } else {
-            toast.error("Geolocation is not supported by this browser");
+            toast.error(Constants.TOASTS.ERROR.GEOLOCATION_NOT_SUPPORTED);
         }
     };
 
@@ -88,14 +82,14 @@ function Trips() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (newTrip.current_cycle_used >= MAX_HOURS) {
-            toast.error("Driver has exceeded the 70-hour limit. Trip cannot be started.");
+            toast.error(Constants.TOASTS.ERROR.DRIVERS_HOUR_LIMIT_EXCEEDED);
             return;
         }
 
         try {
             insertTrips(newTrip)
                 .then((response) => {
-                    toast.success("Trip started successfully");
+                    toast.success(Constants.TOASTS.SUCCESS.TRIP_CREATION_SUCCESS);
                     getTripsFn()
                 })
                 .catch((error) => {
@@ -103,61 +97,69 @@ function Trips() {
                 });
             setModalOpened(false);
         } catch (error) {
-            toast.error("Error starting trip");
+            toast.error(Constants.TOASTS.ERROR.TRIP_CREATION_FAILED);
         }
     };
 
     return (
         <Container>
-            <PageTitle title="Start a New Trip"/>
-            <Button variant="contained" color="primary" onClick={() => setModalOpened(true)}>
-                Start Trip
-            </Button>
+            <PageTitle title="Trips"/>
+            <Box display="flex" justifyContent="flex-end" my={2}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddCircleIcon/>}
+                    onClick={() => setModalOpened(true)}
+                >
+                    Start NEW
+                </Button>
+            </Box>
+            <ModalLayout title={"New Trip"} modalOpened={modalOpened} setModalOpened={setModalOpened}>
 
-            <Modal open={modalOpened} onClose={() => setModalOpened(false)}>
-                <Box sx={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 300, bgcolor: "background.paper", p: 4, borderRadius: 2}}>
-                    <Typography variant="h6" gutterBottom>
-                        New Trip
-                    </Typography>
-                    <Box component="form" onSubmit={handleSubmit}>
-                        {/* Driver Selection */}
-                        <FormControl fullWidth margin="normal">
-                            <InputLabel>Driver</InputLabel>
-                            <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>
-                                {drivers.map((driver) => (
-                                    <MenuItem key={driver.id} value={driver.id}>
-                                        {driver.name} (Used: {driver.current_cycle_used} hrs)
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-
-                        {/* Vehicle Selection */}
-                        <FormControl fullWidth margin="normal">
-                            <InputLabel>Vehicle</InputLabel>
-                            <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>
-                                {vehicles.map((vehicle) => (
-                                    <MenuItem key={vehicle.id} value={vehicle.id}>
-                                        {vehicle.model}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-                        {/* Current Location */}
-                        <Button onClick={getGeoLocation} variant="outlined" fullWidth>
-                            Auto-Detect Current Location
-                        </Button>
-
-                        {/*<TextField label="start_location Location" name="start_location" value={useManualLocation ? newTrip.start_location : currentLocation} onChange={handleInputChange} fullWidth*/}
-                        {/*           margin="normal" required disabled={!useManualLocation}/>*/}
-
-                        {/*<TextField label="end_location Location" name="end_location" value={useManualLocation ? newTrip.end_location : currentLocation} onChange={handleInputChange} fullWidth*/}
-                        {/*           margin="normal" required disabled={!useManualLocation}/>*/}
+                <Box component="form" onSubmit={handleSubmit}>
+                    {/* Driver Selection */}
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Driver</InputLabel>
+                        <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>
+                            {drivers.map((driver) => (
+                                <MenuItem key={driver.id} value={driver.id}>
+                                    {driver.name} (Used: {driver.current_cycle_used} hrs)
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
 
-                        {/* start_location Selection */}
+                    {/* Vehicle Selection */}
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Vehicle</InputLabel>
+                        <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>
+                            {vehicles.map((vehicle) => (
+                                <MenuItem key={vehicle.id} value={vehicle.id}>
+                                    {vehicle.model}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    {/*/!* Current Location *!/*/}
+                    {/*<Button onClick={getGeoLocation} variant="outlined" fullWidth>*/}
+                    {/*    Auto-Detect Current Location*/}
+                    {/*</Button>*/}
+
+                    {/*<TextField label="start_location Location" name="start_location" value={useManualLocation ? newTrip.start_location : currentLocation} onChange={handleInputChange} fullWidth*/}
+                    {/*           margin="normal" required disabled={!useManualLocation}/>*/}
+
+                    {/*<TextField label="end_location Location" name="end_location" value={useManualLocation ? newTrip.end_location : currentLocation} onChange={handleInputChange} fullWidth*/}
+                    {/*           margin="normal" required disabled={!useManualLocation}/>*/}
+
+
+                    <Button onClick={() => {
+                        useManualLocation ? getGeoLocation() : ""
+                        setUseManualLocation(!useManualLocation)
+                    }}>{useManualLocation ? "Use Auto-detect" : "Enter Manually"}</Button>
+                    {/*/!* start_location Selection *!/*/}
+                    {useManualLocation ?
                         <FormControl fullWidth margin="normal">
                             <InputLabel>Location</InputLabel>
                             <Select name="start_location" value={newTrip.start_location} onChange={handleInputChange} required>
@@ -167,38 +169,127 @@ function Trips() {
                                     </MenuItem>
                                 ))}
                             </Select>
-                        </FormControl>
+                        </FormControl> :
 
+                        <TextField label="Pickup Location" name="start_location" value={newTrip.start_location} onChange={handleInputChange} fullWidth margin="normal" required/>
 
-                        {/* end_location Selection */}
-                        <FormControl fullWidth margin="normal">
-                            <InputLabel>Location</InputLabel>
-                            <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>
-                                {locations.map((location) => (
-                                    <MenuItem key={location.id} value={location.id}>
-                                        {location.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <Button onClick={() => setUseManualLocation(!useManualLocation)}>{useManualLocation ? "Use Auto-detect" : "Enter Manually"}</Button>
+                    }
+                    {/* end_location Selection */}
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Location</InputLabel>
+                        <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>
+                            {locations.map((location) => (
+                                <MenuItem key={location.id} value={location.id}>
+                                    {location.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                        {/* Pickup & Dropoff Locations */}
-                        {/*<TextField label="Pickup Location" name="start_location" value={newTrip.pickup_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
-                        {/*<TextField label="Dropoff Location" name="end_location" value={newTrip.dropoff_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
+                    {/* Pickup & Dropoff Locations */}
+                    {/*<TextField label="Dropoff Location" name="end_location" value={newTrip.end_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
 
-                        {/* Current Cycle Used */}
-                        <TextField label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>
-                        {/* Current Cycle Used */}
-                        <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={newTrip.current_cycle_used} onChange={handleInputChange} fullWidth margin="normal" required
-                                   disabled/>
+                    {/* Current Cycle Used */}
+                    <TextField label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>
+                    {/* Current Cycle Used */}
+                    <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={newTrip.current_cycle_used} onChange={handleInputChange} fullWidth margin="normal" required
+                               disabled/>
 
-                        <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
-                            Start Trip
-                        </Button>
-                    </Box>
+                    <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
+                        Start Trip
+                    </Button>
                 </Box>
-            </Modal>
+            </ModalLayout>
+
+            {/*<Modal open={modalOpened} onClose={() => setModalOpened(false)}>*/}
+            {/*    <Box sx={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 300, bgcolor: "background.paper", p: 4, borderRadius: 2}}>*/}
+            {/*        <Typography variant="h6" gutterBottom>*/}
+            {/*            New Trip*/}
+            {/*        </Typography>*/}
+            {/*        <Box component="form" onSubmit={handleSubmit}>*/}
+            {/*            /!* Driver Selection *!/*/}
+            {/*            <FormControl fullWidth margin="normal">*/}
+            {/*                <InputLabel>Driver</InputLabel>*/}
+            {/*                <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>*/}
+            {/*                    {drivers.map((driver) => (*/}
+            {/*                        <MenuItem key={driver.id} value={driver.id}>*/}
+            {/*                            {driver.name} (Used: {driver.current_cycle_used} hrs)*/}
+            {/*                        </MenuItem>*/}
+            {/*                    ))}*/}
+            {/*                </Select>*/}
+            {/*            </FormControl>*/}
+
+
+            {/*            /!* Vehicle Selection *!/*/}
+            {/*            <FormControl fullWidth margin="normal">*/}
+            {/*                <InputLabel>Vehicle</InputLabel>*/}
+            {/*                <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>*/}
+            {/*                    {vehicles.map((vehicle) => (*/}
+            {/*                        <MenuItem key={vehicle.id} value={vehicle.id}>*/}
+            {/*                            {vehicle.model}*/}
+            {/*                        </MenuItem>*/}
+            {/*                    ))}*/}
+            {/*                </Select>*/}
+            {/*            </FormControl>*/}
+
+            {/*            /!*<Button onClick={getGeoLocation} variant="outlined" fullWidth>*!/*/}
+            {/*            /!*    Auto-Detect Current Location*!/*/}
+            {/*            /!*</Button>*!/*/}
+
+            {/*            /!*<TextField label="start_location Location" name="start_location" value={useManualLocation ? newTrip.start_location : currentLocation} onChange={handleInputChange} fullWidth*!/*/}
+            {/*            /!*           margin="normal" required disabled={!useManualLocation}/>*!/*/}
+
+            {/*            /!*<TextField label="end_location Location" name="end_location" value={useManualLocation ? newTrip.end_location : currentLocation} onChange={handleInputChange} fullWidth*!/*/}
+            {/*            /!*           margin="normal" required disabled={!useManualLocation}/>*!/*/}
+
+
+            {/*            <Button onClick={() => {*/}
+            {/*                useManualLocation ? getGeoLocation() : ""*/}
+            {/*                setUseManualLocation(!useManualLocation)*/}
+            {/*            }}>{useManualLocation ? "Use Auto-detect" : "Enter Manually"}</Button>*/}
+
+            {/*            {useManualLocation ?*/}
+            {/*                <FormControl fullWidth margin="normal">*/}
+            {/*                    <InputLabel>Location</InputLabel>*/}
+            {/*                    <Select name="start_location" value={newTrip.start_location} onChange={handleInputChange} required>*/}
+            {/*                        {locations.map((location) => (*/}
+            {/*                            <MenuItem key={location.id} value={location.id}>*/}
+            {/*                                {location.name}*/}
+            {/*                            </MenuItem>*/}
+            {/*                        ))}*/}
+            {/*                    </Select>*/}
+            {/*                </FormControl> :*/}
+
+            {/*                <TextField label="Pickup Location" name="start_location" value={newTrip.start_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
+
+            {/*            }*/}
+            {/*            /!* end_location Selection *!/*/}
+            {/*            <FormControl fullWidth margin="normal">*/}
+            {/*                <InputLabel>Location</InputLabel>*/}
+            {/*                <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>*/}
+            {/*                    {locations.map((location) => (*/}
+            {/*                        <MenuItem key={location.id} value={location.id}>*/}
+            {/*                            {location.name}*/}
+            {/*                        </MenuItem>*/}
+            {/*                    ))}*/}
+            {/*                </Select>*/}
+            {/*            </FormControl>*/}
+
+            {/*            /!* Pickup & Dropoff Locations *!/*/}
+            {/*            /!*<TextField label="Dropoff Location" name="end_location" value={newTrip.end_location} onChange={handleInputChange} fullWidth margin="normal" required/>*!/*/}
+
+            {/*            /!* Current Cycle Used *!/*/}
+            {/*            <TextField label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
+            {/*            /!* Current Cycle Used *!/*/}
+            {/*            <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={newTrip.current_cycle_used} onChange={handleInputChange} fullWidth margin="normal" required*/}
+            {/*                       disabled/>*/}
+
+            {/*            <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>*/}
+            {/*                Start Trip*/}
+            {/*            </Button>*/}
+            {/*        </Box>*/}
+            {/*    </Box>*/}
+            {/*</Modal>*/}
 
 
             {/* Trips Table */}
@@ -220,8 +311,8 @@ function Trips() {
                         {trips.map(trip => (
                             <TableRow key={trip.id}>
                                 <TableCell>{trip.id}</TableCell>
-                                <TableCell>{trip.driver}</TableCell>
-                                <TableCell>{trip.vehicle}</TableCell>
+                                <TableCell>{trip.driver.name}</TableCell>
+                                <TableCell>{trip.vehicle.model}</TableCell>
                                 <TableCell>{trip.start_location}</TableCell>
                                 <TableCell>{trip.end_location}</TableCell>
                                 <TableCell>{trip.start_time}</TableCell>

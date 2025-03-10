@@ -1,8 +1,8 @@
-import { defineConfig, loadEnv } from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 import react from '@vitejs/plugin-react';
 import getConfig from './src/config/env/config.main.js';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({mode}) => {
     // Load environment variables (optional, if needed)
     const env = loadEnv(mode, process.cwd());
 
@@ -12,6 +12,9 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [react()],
+        build: {
+            outDir: 'build', // Change the output directory to 'build' for Render
+        },
         server: {
             proxy: {
                 '/api': {

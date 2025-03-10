@@ -26,6 +26,9 @@ class LocationSerializer(serializers.ModelSerializer):
 
 # Trip Serializer
 class TripSerializer(serializers.ModelSerializer):
+    # driver = DriverSerializer()  # Now driver details will be included
+    # vehicle = VehicleSerializer()  # Now vehicle details will be included
+
     class Meta:
         model = Trip
         fields = '__all__'

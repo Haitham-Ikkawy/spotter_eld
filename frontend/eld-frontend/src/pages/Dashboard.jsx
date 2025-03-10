@@ -1,10 +1,9 @@
 import React from 'react';
-import {Typography, Container, Modal, Box, TextField, Button, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody} from '@mui/material';
+import {Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from '@mui/material';
 import PageTitle from "../components/shared/PageTitle.jsx";
 
 function Dashboard() {
-  return (
-
+    return (
         <Container>
             <PageTitle title="Dashboard"/>
 
@@ -26,7 +25,7 @@ function Dashboard() {
                 </Table>
             </TableContainer>
         </Container>
-  );
+    );
 }
 
 export default Dashboard;

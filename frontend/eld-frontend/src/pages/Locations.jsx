@@ -3,10 +3,12 @@ import {GetTrips, insertLocation, insertTrips} from "../services/Api.js";
 import {toast} from "react-toastify";
 import {Box, Button, Container, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 
 function Locations() {
     const [locations, setLocations] = useState([]);
-    const [open, setOpen] = useState(false);
+
+    const [modalOpened, setModalOpened] = useState(false);
     const [newLocation, setNewLocation] = useState({
         name: '',
         latitude: '',
@@ -52,8 +54,19 @@ function Locations() {
         <Container>
             <PageTitle title="Locations"/>
 
+            <Box display="flex" justifyContent="flex-end" my={2}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddCircleIcon/>}
+                    onClick={() => setModalOpened(true)}
+                >
+                    Add NEW
+                </Button>
+            </Box>
+
             {/* Add Trip Modal */}
-            <Modal open={open} onClose={() => setOpen(false)}>
+            <Modal open={modalOpened} onClose={() => setModalOpened(false)}>
                 <Box sx={{
                     position: 'absolute',
                     top: '50%',
@@ -67,7 +80,7 @@ function Locations() {
                     borderRadius: 2
                 }}>
                     <Typography variant="h6" gutterBottom>
-                        Add New Trip
+                        Add New LOCATION
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit}>
                         <TextField label="Name" name="name" value={newLocation.driver} onChange={handleInputChange} fullWidth margin="normal" required/>
