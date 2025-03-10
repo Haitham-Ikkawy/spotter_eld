@@ -12,6 +12,7 @@ export default defineConfig(({mode}) => {
 
     return {
         plugins: [react()],
+        base: '/',
         build: {
             outDir: 'build', // Change the output directory to 'build' for Render
         },
