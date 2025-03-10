@@ -7,7 +7,7 @@
     "localHost": "vite --mode localHost",
     "dev": "vite --mode development",
     "prod": "vite --mode production",
-    "build": "vite build --mode production",
+    "build": "vite build",
     "build:staging": "vite build --mode staging",
     "preview": "vite preview --mode production",
     "preview:staging": "vite preview --mode staging",
