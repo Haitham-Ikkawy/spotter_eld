@@ -14,7 +14,7 @@ export default defineConfig(({mode}) => {
         plugins: [react()],
         base: '/',
         build: {
-            outDir: 'build', // Change the output directory to 'build' for Render
+            outDir: 'dist', // Change the output directory to 'build' for Render
         },
         server: {
             proxy: {
