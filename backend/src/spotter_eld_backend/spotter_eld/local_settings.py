@@ -24,6 +24,7 @@ lsettings = {
     #                           ],
     'CORS_ALLOWED_ORIGINS': [
         "http://localhost:5174",
+        "https://v0-react-app-with-java-script-k9q18l22b.vercel.app"
     ],
     'DEPLOY_LOCATION': 'LOCAL',
     'IS_MAINTENANCE': False,

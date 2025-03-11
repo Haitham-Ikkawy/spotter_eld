@@ -10,8 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
-import logging.handlers
 import os
 import sys
 from pathlib import Path
@@ -21,7 +19,6 @@ import sentry_sdk
 from django.http import UnreadablePostError
 from sentry_sdk.integrations.django import DjangoIntegration
 
-
 try:
     from spotter_eld.local_settings import lsettings
 except ImportError:
@@ -29,13 +26,11 @@ except ImportError:
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-dahagjp5p27su@f57%i@e#q7s)orl8=a1*0n3mqzlu-946q48#'
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = lsettings.get("DEBUG", False)
@@ -43,9 +38,11 @@ PROD = lsettings.get("PROD", True)
 DEPLOY_LOCATION = lsettings.get("DEPLOY_LOCATION", "")  # possible values: ADMIN, API, DEV
 DEPLOY_LOCATION_PUBLIC_IP = lsettings.get("DEPLOY_LOCATION_PUBLIC_IP", "")
 
-ALLOWED_HOSTS = lsettings.get("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
+# ALLOWED_HOSTS = lsettings.get("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = "*"
 
-CORS_ALLOWED_ORIGINS = lsettings.get("CORS_ALLOWED_ORIGINS", ["http://localhost", "http://127.0.0.1:3000"])
+# CORS_ALLOWED_ORIGINS = lsettings.get("CORS_ALLOWED_ORIGINS", ["http://localhost", "http://127.0.0.1:3000"])
+CORS_ALLOWED_ORIGINS = "*"
 CORS_ALLOW_HEADERS = ["*"]
 
 # Application definition
@@ -313,21 +310,20 @@ if DEPLOY_LOCATION not in ['LOCAL']:
     # else:
     #     dsn = "https://bcda83e3d0fd4801adbe4fbb142e4177@o1267879.ingest.sentry.io/6569511"
 
-    dsn = "sample-dsn"
-
-    sentry_sdk.init(
-        dsn=dsn,
-        integrations=[DjangoIntegration()],
-        environment="PROD" if PROD else "DEV",
-        server_name=DEPLOY_LOCATION,
-        before_send=before_send
-    )
+    # dsn = "sample-dsn"
+    #
+    # sentry_sdk.init(
+    #     dsn=dsn,
+    #     integrations=[DjangoIntegration()],
+    #     environment="PROD" if PROD else "DEV",
+    #     server_name=DEPLOY_LOCATION,
+    #     before_send=before_send
+    # )
 
 LOGIN_URL = '/administration/login'
 LOGIN_REDIRECT_URL = '/administration'
 ACCESS_DENIED_URL = '/administration/access-denied"'
 SERVER_ROLES = []
-
 
 # ===============================================================================
 # Email Settings
@@ -344,7 +340,6 @@ EMAIL_USE_TLS = lsettings.get('EMAIL_USE_TLS', True)
 EMAIL_HOST_USER = lsettings.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = lsettings.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_HOST_USER_DISPLAY_NAME = lsettings.get('EMAIL_HOST_USER_DISPLAY_NAME', 'NumAds')
-
 
 # Compress settings
 COMPRESS_ENABLED = True
@@ -376,10 +371,9 @@ REST_FRAMEWORK = {
 
 # JWT Token Settings
 from datetime import timedelta
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
 }
-
-
