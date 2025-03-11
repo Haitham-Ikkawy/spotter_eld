@@ -178,147 +178,36 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+import logging.config
+# Logging Configuration
+# Disable prev config
+LOGGING_CONFIG = None
 
-def skip_unreadable_post(record):
-    """
-    Used in the logging filters callback, to skip UnreadablePostError for the cancelled requests
-    """
-    if record.exc_info:
-        _, exc_value = record.exc_info[:2]
-        if isinstance(exc_value, UnreadablePostError):
-            return False
-    return True
-
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {
-        "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
-        "skip_unreadable_posts": {
-            "()": "django.utils.log.CallbackFilter",
-            "callback": skip_unreadable_post,
+# Get loglevel from env
+LOGLEVEL = os.getenv('DJANGO_LOGLEVEL', 'info').upper()
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)s] %(module)s %(process)d %(thread)d %(message)s',
         },
     },
-    "formatters": {
-        "simple": {"format": "%(module)s line: %(lineno)s: %(message)s"},
-        "level_module": {
-            "format": "%(asctime)s %(levelname)s %(name)s.%(module)s  %(message)s"
-        },
-        "level_app": {"format": "%(asctime)s | %(levelname)s | %(message)s"},
-        "time_message": {"format": "%(asctime)s - %(message)s"},
+'handlers': {
+    'console': {
+        'class': 'logging.StreamHandler',
+        'formatter': 'console',
     },
-    "handlers": {
-        "email_handler": {"class": "logging.NullHandler"},
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "level_app",
-        },
-        "main_log_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "backupCount": 5,
-            "when": "midnight",
-            "filename": "%s/main.log" % lsettings.get("MAIN_LOG_FILE", "/var/log/spotter_eld"),
-            "formatter": "level_app",
+},
+
+'loggers': {
+    '': {
+        'level': LOGLEVEL,
+        'handlers': ['console',],
         },
     },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "main_log_file"],  # mail_admins
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "requests": {
-            "handlers": ["console", "main_log_file"],  # mail_admins
-            "level": "ERROR",
-            "propagate": True,
-        },
-        'celery': {
-            'handlers': ['console', 'main_log_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'parso': {
-            'handlers': ['console', 'main_log_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'pymongo': {
-            'handlers': ['console', 'main_log_file'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        "": {
-            "handlers": ["console", "main_log_file", "email_handler"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-    },
-}
+})
 
-COMMANDS_FOLDER = os.listdir(os.path.join(BASE_DIR, 'spotter_eld', 'management', 'commands'))
-PROCESSES_LIST = [f.replace('.py', '') for f in COMMANDS_FOLDER if f not in ['init.py', 'pycache']]
-PROCESSES_LIST.extend(['runserver', 'test', 'shell'])
-
-if len(sys.argv) > 1 and sys.argv[1] in PROCESSES_LIST:
-    print("Resetting loggers to just log on console")
-    # del LOGGING['handlers']['main_log_file']
-
-    for loggerKey, lgr in LOGGING['loggers'].items():
-        if sys.argv[1] in ['runserver', 'test', 'shell']:
-            lgr['handlers'] = ['console']
-        else:
-            lgr['handlers'].remove('main_log_file')
-
-if DEPLOY_LOCATION not in ['LOCAL']:
-    def before_send(event, hint):
-        try:
-            error_message = event.get('logentry', {}).get('message')
-            # print("sentry before_send error_message: ", error_message)
-
-            if error_message:
-                if error_message.startswith('Invalid HTTP_HOST header'):
-                    event = None
-                if "OSError: write error" in error_message:
-                    event = None
-
-            # print("sentry before_send hint: ", hint)
-
-            if 'exc_info' in hint:
-                exc_type, exc_value, tb = hint.get('exc_info')
-                print("sentry before_send log_exc_info: ", str(exc_value))
-                if exc_value and "'NoneType' object has no attribute 'push'" in str(exc_value):
-                    event = None
-                if exc_value and "OSError: write error" in str(exc_value):
-                    event = None
-                if exc_type == OSError and str(exc_value) == 'write error':
-                    event = None
-                if exc_value and "Apache/mod_wsgi request data read error: Partial results are valid but processing is incomplete." in str(exc_value):
-                    event = None
-
-        except Exception as e:
-            print("Fail sentry before_send, event:", event, "hint:", hint, "Exception: ", e)
-
-        print("sentry before_send event exist: ", True if event else False)
-        return event
-
-
-    # if PROD:
-    #     dsn = "https://fa3af298e9da40e0864c02b72fb15bbe@o4504054843047936.ingest.sentry.io/4504060561522688"
-    # else:
-    #     dsn = "https://bcda83e3d0fd4801adbe4fbb142e4177@o1267879.ingest.sentry.io/6569511"
-
-    # dsn = "sample-dsn"
-    #
-    # sentry_sdk.init(
-    #     dsn=dsn,
-    #     integrations=[DjangoIntegration()],
-    #     environment="PROD" if PROD else "DEV",
-    #     server_name=DEPLOY_LOCATION,
-    #     before_send=before_send
-    # )
 
 LOGIN_URL = '/administration/login'
 LOGIN_REDIRECT_URL = '/administration'
