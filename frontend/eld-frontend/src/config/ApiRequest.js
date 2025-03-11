@@ -30,7 +30,7 @@ const headers = {
 // let baseURL = process.env.BaseUrl
 
 const ApiRequest = axios.create({
-    baseURL: "http://localhost:8000/api/",
+    baseURL: "https://haithamakk.pythonanywhere.com/api/",
     timeout: 60000,
     headers: headers,
 });
