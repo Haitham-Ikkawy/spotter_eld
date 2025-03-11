@@ -14,10 +14,10 @@ import os
 import sys
 from pathlib import Path
 
-import mongoengine
-import sentry_sdk
-from django.http import UnreadablePostError
-from sentry_sdk.integrations.django import DjangoIntegration
+# import mongoengine
+# import sentry_sdk
+# from django.http import UnreadablePostError
+# from sentry_sdk.integrations.django import DjangoIntegration
 
 try:
     from spotter_eld.local_settings import lsettings
@@ -128,14 +128,14 @@ MONGO_DB_BASE_HOST = lsettings.get("MONGO_DB_BASE_HOST", "localhost")
 MONGO_DB = lsettings.get("MONGO_DB", "spotter_eld")
 MONGO_USER = lsettings.get("MONGO_USER", None)
 MONGO_PASSWORD = lsettings.get("MONGO_PASSWORD", None)
-DEFAULT_DB_CONNECTION = mongoengine.connect(
-    MONGO_DB,
-    host=MONGODB_HOST,
-    username=MONGO_USER,
-    password=MONGO_PASSWORD,
-    alias="default",
-    authentication_source=MONGO_DB,
-)
+# DEFAULT_DB_CONNECTION = mongoengine.connect(
+#     MONGO_DB,
+#     host=MONGODB_HOST,
+#     username=MONGO_USER,
+#     password=MONGO_PASSWORD,
+#     alias="default",
+#     authentication_source=MONGO_DB,
+# )
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
