@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {GetTrips, insertLocation, insertTrips} from "../services/Api.js";
+import {getLocation, GetTrips, insertLocation, insertTrips} from "../services/Api.js";
 import {toast} from "react-toastify";
 import {Box, Button, Container, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
@@ -18,7 +18,7 @@ function Locations() {
 
     // Fetch locations from the backend
     useEffect(() => {
-        GetTrips({})
+        getLocation({})
             .then((response) => {
                 setLocations(response.data);
             })
