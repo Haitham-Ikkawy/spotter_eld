@@ -39,7 +39,7 @@ DEPLOY_LOCATION = lsettings.get("DEPLOY_LOCATION", "")  # possible values: ADMIN
 DEPLOY_LOCATION_PUBLIC_IP = lsettings.get("DEPLOY_LOCATION_PUBLIC_IP", "")
 
 # ALLOWED_HOSTS = lsettings.get("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
-ALLOWED_HOSTS = "*"
+ALLOWED_HOSTS = ["*"]
 
 # CORS_ALLOWED_ORIGINS = lsettings.get("CORS_ALLOWED_ORIGINS", ["http://localhost", "http://127.0.0.1:3000"])
 CORS_ALLOWED_ORIGINS = "*"
