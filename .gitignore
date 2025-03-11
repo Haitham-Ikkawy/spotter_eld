@@ -1,4 +1,4 @@
-src/spotter_eld/local_settings.py
+backend/src/spotter_eld_backend/spotter_eld/local_settings.py
 *.pyc
 .idea/*
 __pycache__/*
