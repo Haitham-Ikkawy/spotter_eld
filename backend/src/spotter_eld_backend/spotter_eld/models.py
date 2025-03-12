@@ -73,7 +73,7 @@ class DriverLog(models.Model):
 
 
 class RestBreak(models.Model):
-    driver_log = models.ForeignKey(DriverLog, on_delete=models.CASCADE, related_name='rest_breaks')
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='restbreaks')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     duration = models.FloatField(help_text="Duration in hours")

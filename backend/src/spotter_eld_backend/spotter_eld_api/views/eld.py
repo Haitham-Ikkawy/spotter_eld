@@ -59,7 +59,7 @@ from helper.common.constants import RequestTypes
 from spotter_eld.models import Driver, Vehicle, Location, Trip, DriverLog, RestBreak, Fueling
 from .serializers import (
     DriverSerializer, VehicleSerializer, LocationSerializer,
-    TripSerializer, DriverLogSerializer, RestBreakSerializer
+    TripSerializer, DriverLogSerializer, RestBreakSerializer, TripListSerializer
 )
 
 
@@ -285,7 +285,7 @@ def trip_form_data(request):
 def trip_list(request):
     if request.method in RequestTypes.GET:
         trips = Trip.objects.select_related('driver', 'vehicle').all()
-        serializer = TripSerializer(trips, many=True)
+        serializer = TripListSerializer(trips, many=True)
         return Response(serializer.data)
 
     if request.method in RequestTypes.POST:

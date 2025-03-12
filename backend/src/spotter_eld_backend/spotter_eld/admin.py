@@ -46,7 +46,7 @@ class DriverLogAdmin(admin.ModelAdmin):
 # RestBreak Admin
 @admin.register(RestBreak)
 class RestBreakAdmin(admin.ModelAdmin):
-    list_display = ('id', 'driver_log', 'start_time', 'end_time', 'duration', 'created_dt', 'updated_dt')
+    list_display = ('id', 'start_time', 'end_time', 'duration', 'created_dt', 'updated_dt')
     list_filter = ('start_time', 'end_time', 'created_dt')
     search_fields = ('driver_log__driver__name',)
     ordering = ('start_time',)

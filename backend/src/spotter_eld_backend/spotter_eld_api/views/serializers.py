@@ -33,7 +33,13 @@ class TripSerializer(serializers.ModelSerializer):
         model = Trip
         fields = '__all__'
 
+class TripListSerializer(serializers.ModelSerializer):
+    driver = DriverSerializer()  # Now driver details will be included
+    vehicle = VehicleSerializer()  # Now vehicle details will be included
 
+    class Meta:
+        model = Trip
+        fields = '__all__'
 # DriverLog Serializer
 class DriverLogSerializer(serializers.ModelSerializer):
     class Meta:

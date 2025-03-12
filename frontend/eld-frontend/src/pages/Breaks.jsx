@@ -127,13 +127,13 @@ function Breaks() {
                         New Trip
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit}>
-                        {/* Driver Selection */}
+                        {/* Trip Selection */}
                         <FormControl fullWidth margin="normal">
-                            <InputLabel>Driver</InputLabel>
-                            <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>
-                                {drivers.map((driver) => (
-                                    <MenuItem key={driver.id} value={driver.id}>
-                                        {driver.name} (Used: {driver.current_cycle_used} hrs)
+                            <InputLabel>Trip</InputLabel>
+                            <Select name="trip" value={newTrip.driver} onChange={handleInputChange} required>
+                                {trips.map((trip) => (
+                                    <MenuItem key={trip.id} value={trip.id}>
+                                        {trip.id}
                                     </MenuItem>
                                 ))}
                             </Select>
@@ -151,18 +151,6 @@ function Breaks() {
                                 ))}
                             </Select>
                         </FormControl>
-
-                        {/*/!* Current Location *!/*/}
-                        {/*<Button onClick={getGeoLocation} variant="outlined" fullWidth>*/}
-                        {/*    Auto-Detect Current Location*/}
-                        {/*</Button>*/}
-
-                        {/*<TextField label="start_location Location" name="start_location" value={useManualLocation ? newTrip.start_location : currentLocation} onChange={handleInputChange} fullWidth*/}
-                        {/*           margin="normal" required disabled={!useManualLocation}/>*/}
-
-                        {/*<TextField label="end_location Location" name="end_location" value={useManualLocation ? newTrip.end_location : currentLocation} onChange={handleInputChange} fullWidth*/}
-                        {/*           margin="normal" required disabled={!useManualLocation}/>*/}
-
 
                         <Button onClick={() => {
                             useManualLocation ? getGeoLocation() : ""
