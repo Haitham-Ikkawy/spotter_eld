@@ -26,3 +26,8 @@ class Role:
     CREATOR = 'CREATOR'
     ADMIN = 'ADMIN'
     USER = 'USER'
+
+
+class TripStatus:
+    ONGOING = "ONGOING"
+    ENDED = "ENDED"

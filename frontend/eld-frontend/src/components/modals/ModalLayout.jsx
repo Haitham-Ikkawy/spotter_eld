@@ -18,7 +18,7 @@ function ModalLayout(props) {
         p: 4,
         borderRadius: 2
     }
-    let desktopStyle = {position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 500, bgcolor: "background.paper", p: 4, borderRadius: 2}
+    let desktopStyle = {position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 600, bgcolor: "background.paper", p: 4, borderRadius: 2}
     const boxStyle = isMobile ? mobileStyle : desktopStyle
     return (
         <Modal open={modalOpened} onClose={() => setModalOpened(false)}>

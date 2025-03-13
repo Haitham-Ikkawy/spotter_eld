@@ -53,7 +53,7 @@ function Trips() {
                 setTrips(response.data);
             })
             .catch((error) => {
-                toast.error(error.response);
+                // toast.error(error.response);
             });
 
     }
@@ -190,7 +190,9 @@ function Trips() {
                     {/*<TextField label="Dropoff Location" name="end_location" value={newTrip.end_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
 
                     {/* Current Cycle Used */}
-                    <TextField label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>
+                    <TextField type="number"
+                               inputProps={{min: 0, max: 100}} // Sets UI constraints
+                               label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>
                     {/* Current Cycle Used */}
                     <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={newTrip.current_cycle_used} onChange={handleInputChange} fullWidth margin="normal" required
                                disabled/>
@@ -200,96 +202,6 @@ function Trips() {
                     </Button>
                 </Box>
             </ModalLayout>
-
-            {/*<Modal open={modalOpened} onClose={() => setModalOpened(false)}>*/}
-            {/*    <Box sx={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 300, bgcolor: "background.paper", p: 4, borderRadius: 2}}>*/}
-            {/*        <Typography variant="h6" gutterBottom>*/}
-            {/*            New Trip*/}
-            {/*        </Typography>*/}
-            {/*        <Box component="form" onSubmit={handleSubmit}>*/}
-            {/*            /!* Driver Selection *!/*/}
-            {/*            <FormControl fullWidth margin="normal">*/}
-            {/*                <InputLabel>Driver</InputLabel>*/}
-            {/*                <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>*/}
-            {/*                    {drivers.map((driver) => (*/}
-            {/*                        <MenuItem key={driver.id} value={driver.id}>*/}
-            {/*                            {driver.name} (Used: {driver.current_cycle_used} hrs)*/}
-            {/*                        </MenuItem>*/}
-            {/*                    ))}*/}
-            {/*                </Select>*/}
-            {/*            </FormControl>*/}
-
-
-            {/*            /!* Vehicle Selection *!/*/}
-            {/*            <FormControl fullWidth margin="normal">*/}
-            {/*                <InputLabel>Vehicle</InputLabel>*/}
-            {/*                <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>*/}
-            {/*                    {vehicles.map((vehicle) => (*/}
-            {/*                        <MenuItem key={vehicle.id} value={vehicle.id}>*/}
-            {/*                            {vehicle.model}*/}
-            {/*                        </MenuItem>*/}
-            {/*                    ))}*/}
-            {/*                </Select>*/}
-            {/*            </FormControl>*/}
-
-            {/*            /!*<Button onClick={getGeoLocation} variant="outlined" fullWidth>*!/*/}
-            {/*            /!*    Auto-Detect Current Location*!/*/}
-            {/*            /!*</Button>*!/*/}
-
-            {/*            /!*<TextField label="start_location Location" name="start_location" value={useManualLocation ? newTrip.start_location : currentLocation} onChange={handleInputChange} fullWidth*!/*/}
-            {/*            /!*           margin="normal" required disabled={!useManualLocation}/>*!/*/}
-
-            {/*            /!*<TextField label="end_location Location" name="end_location" value={useManualLocation ? newTrip.end_location : currentLocation} onChange={handleInputChange} fullWidth*!/*/}
-            {/*            /!*           margin="normal" required disabled={!useManualLocation}/>*!/*/}
-
-
-            {/*            <Button onClick={() => {*/}
-            {/*                useManualLocation ? getGeoLocation() : ""*/}
-            {/*                setUseManualLocation(!useManualLocation)*/}
-            {/*            }}>{useManualLocation ? "Use Auto-detect" : "Enter Manually"}</Button>*/}
-
-            {/*            {useManualLocation ?*/}
-            {/*                <FormControl fullWidth margin="normal">*/}
-            {/*                    <InputLabel>Location</InputLabel>*/}
-            {/*                    <Select name="start_location" value={newTrip.start_location} onChange={handleInputChange} required>*/}
-            {/*                        {locations.map((location) => (*/}
-            {/*                            <MenuItem key={location.id} value={location.id}>*/}
-            {/*                                {location.name}*/}
-            {/*                            </MenuItem>*/}
-            {/*                        ))}*/}
-            {/*                    </Select>*/}
-            {/*                </FormControl> :*/}
-
-            {/*                <TextField label="Pickup Location" name="start_location" value={newTrip.start_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
-
-            {/*            }*/}
-            {/*            /!* end_location Selection *!/*/}
-            {/*            <FormControl fullWidth margin="normal">*/}
-            {/*                <InputLabel>Location</InputLabel>*/}
-            {/*                <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>*/}
-            {/*                    {locations.map((location) => (*/}
-            {/*                        <MenuItem key={location.id} value={location.id}>*/}
-            {/*                            {location.name}*/}
-            {/*                        </MenuItem>*/}
-            {/*                    ))}*/}
-            {/*                </Select>*/}
-            {/*            </FormControl>*/}
-
-            {/*            /!* Pickup & Dropoff Locations *!/*/}
-            {/*            /!*<TextField label="Dropoff Location" name="end_location" value={newTrip.end_location} onChange={handleInputChange} fullWidth margin="normal" required/>*!/*/}
-
-            {/*            /!* Current Cycle Used *!/*/}
-            {/*            <TextField label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
-            {/*            /!* Current Cycle Used *!/*/}
-            {/*            <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={newTrip.current_cycle_used} onChange={handleInputChange} fullWidth margin="normal" required*/}
-            {/*                       disabled/>*/}
-
-            {/*            <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>*/}
-            {/*                Start Trip*/}
-            {/*            </Button>*/}
-            {/*        </Box>*/}
-            {/*    </Box>*/}
-            {/*</Modal>*/}
 
 
             {/* Trips Table */}

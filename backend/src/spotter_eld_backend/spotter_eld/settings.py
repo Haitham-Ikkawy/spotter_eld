@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
-import sys
 from pathlib import Path
 
 # import mongoengine
@@ -55,6 +54,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'spotter_eld',
     'spotter_eld_api',
     # 'spotter_eld_admin',
@@ -179,6 +180,7 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 import logging.config
+
 # Logging Configuration
 # Disable prev config
 LOGGING_CONFIG = None
@@ -193,21 +195,20 @@ logging.config.dictConfig({
             'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)s] %(module)s %(process)d %(thread)d %(message)s',
         },
     },
-'handlers': {
-    'console': {
-        'class': 'logging.StreamHandler',
-        'formatter': 'console',
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
     },
-},
 
-'loggers': {
-    '': {
-        'level': LOGLEVEL,
-        'handlers': ['console',],
+    'loggers': {
+        '': {
+            'level': LOGLEVEL,
+            'handlers': ['console', ],
         },
     },
 })
-
 
 LOGIN_URL = '/administration/login'
 LOGIN_REDIRECT_URL = '/administration'

@@ -52,11 +52,12 @@
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from helper.common.constants import RequestTypes
-from spotter_eld.models import Driver, Vehicle, Location, Trip, DriverLog, RestBreak, Fueling
+from spotter_eld.models import Driver, Vehicle, Location, Trip, RestBreak, Fueling
 from .serializers import (
     DriverSerializer, VehicleSerializer, LocationSerializer,
     TripSerializer, DriverLogSerializer, RestBreakSerializer, TripListSerializer
@@ -65,6 +66,7 @@ from .serializers import (
 
 # Driver API
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])
 def driver_list(request):
     if request.method in RequestTypes.GET:
         drivers = Driver.objects.all()
@@ -80,6 +82,7 @@ def driver_list(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.PUT, RequestTypes.DELETE])
+@permission_classes([IsAuthenticated])
 def driver_detail(request, pk):
     driver = get_object_or_404(Driver, pk=pk)
 
@@ -101,6 +104,7 @@ def driver_detail(request, pk):
 
 # Vehicle API
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])
 def vehicle_list(request):
     if request.method in RequestTypes.GET:
         vehicles = Vehicle.objects.all()
@@ -116,6 +120,7 @@ def vehicle_list(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.PUT, RequestTypes.DELETE])
+@permission_classes([IsAuthenticated])
 def vehicle_detail(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
 
@@ -137,6 +142,7 @@ def vehicle_detail(request, pk):
 
 # Location API
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])
 def location_list(request):
     if request.method in RequestTypes.GET:
         locations = Location.objects.all()
@@ -152,6 +158,7 @@ def location_list(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.PUT, RequestTypes.DELETE])
+@permission_classes([IsAuthenticated])
 def location_detail(request, pk):
     location = get_object_or_404(Location, pk=pk)
 
@@ -177,6 +184,7 @@ def location_detail(request, pk):
 
 # DriverLog API
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])
 def driverlog_list(request):
     if request.method in RequestTypes.GET:
         logs = DriverLog.objects.all()
@@ -192,6 +200,7 @@ def driverlog_list(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.PUT, RequestTypes.DELETE])
+@permission_classes([IsAuthenticated])
 def driverlog_detail(request, pk):
     log = get_object_or_404(DriverLog, pk=pk)
 
@@ -213,6 +222,7 @@ def driverlog_detail(request, pk):
 
 # RestBreak API
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])
 def restbreak_list(request):
     if request.method in RequestTypes.GET:
         restbreaks = RestBreak.objects.all()
@@ -228,6 +238,7 @@ def restbreak_list(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.PUT, RequestTypes.DELETE])
+@permission_classes([IsAuthenticated])
 def restbreak_detail(request, pk):
     restbreak = get_object_or_404(RestBreak, pk=pk)
 
@@ -249,12 +260,14 @@ def restbreak_detail(request, pk):
 
 # Fueling API
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])
 def fueling_list(request):
     if request.method in RequestTypes.GET:
         fuelings = Fueling.objects.all()
 
 
 @api_view([RequestTypes.GET])
+@permission_classes([IsAuthenticated])
 def trip_form_data(request):
     """
     Fetches all necessary data for the trip form submission:
@@ -282,6 +295,7 @@ def trip_form_data(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.POST])
+@permission_classes([IsAuthenticated])  # Require authentication
 def trip_list(request):
     if request.method in RequestTypes.GET:
         trips = Trip.objects.select_related('driver', 'vehicle').all()
@@ -290,7 +304,7 @@ def trip_list(request):
 
     if request.method in RequestTypes.POST:
         data = request.data.copy()  # Make a mutable copy of request data
-        data['start_time'] = now()  # Override start_time with server timestamp
+        data['start_dt'] = now()  # Override start_time with server timestamp
 
         serializer = TripSerializer(data=data)
         if serializer.is_valid():
@@ -300,6 +314,7 @@ def trip_list(request):
 
 
 @api_view([RequestTypes.GET, RequestTypes.PUT, RequestTypes.DELETE])
+@permission_classes([IsAuthenticated])
 def trip_detail(request, pk):
     trip = get_object_or_404(Trip, pk=pk)
 

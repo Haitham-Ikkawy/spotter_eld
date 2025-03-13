@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Driver, Vehicle, Location, Trip, DriverLog, RestBreak, Fueling
+from .models import Driver, Vehicle, Location, Trip, RestBreak, Fueling
 
 # Register your models here.
 
@@ -30,31 +30,31 @@ class LocationAdmin(admin.ModelAdmin):
 # Trip Admin
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
-    list_display = ('id', 'driver', 'vehicle', 'start_location', 'end_location', 'start_time', 'end_time', 'distance', 'created_dt', 'updated_dt')
-    list_filter = ('start_time', 'end_time', 'created_dt')
+    list_display = ('id', 'driver', 'vehicle', 'start_location', 'end_location', 'start_dt', 'end_dt', 'distance', 'created_dt', 'updated_dt')
+    list_filter = ('start_dt', 'end_dt', 'created_dt')
     search_fields = ('driver__name', 'vehicle__make', 'start_location__name', 'end_location__name')
-    ordering = ('start_time',)
-
-# DriverLog Admin
-@admin.register(DriverLog)
-class DriverLogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'driver', 'trip', 'date', 'total_driving_hours', 'total_on_duty_hours', 'created_dt', 'updated_dt')
-    list_filter = ('date', 'created_dt')
-    search_fields = ('driver__name', 'trip__id')
-    ordering = ('date',)
+    ordering = ('start_dt',)
+#
+# # DriverLog Admin
+# @admin.register(DriverLog)
+# class DriverLogAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'driver', 'trip', 'date', 'total_driving_hours', 'total_on_duty_hours', 'created_dt', 'updated_dt')
+#     list_filter = ('date', 'created_dt')
+#     search_fields = ('driver__name', 'trip__id')
+#     ordering = ('date',)
 
 # RestBreak Admin
 @admin.register(RestBreak)
 class RestBreakAdmin(admin.ModelAdmin):
-    list_display = ('id', 'start_time', 'end_time', 'duration', 'created_dt', 'updated_dt')
-    list_filter = ('start_time', 'end_time', 'created_dt')
+    list_display = ('id', 'start_dt', 'end_dt', 'duration', 'created_dt', 'updated_dt')
+    list_filter = ('start_dt', 'end_dt', 'created_dt')
     search_fields = ('driver_log__driver__name',)
-    ordering = ('start_time',)
+    ordering = ('start_dt',)
 
 # Fueling Admin
 @admin.register(Fueling)
 class FuelingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'trip', 'location', 'fuel_amount', 'fuel_cost', 'mileage_dt_fueling', 'created_dt', 'updated_dt')
+    list_display = ('id', 'trip', 'location', 'amount', 'cost', 'mileage_dt_fueling', 'created_dt', 'updated_dt')
     list_filter = ('created_dt', 'updated_dt')
     search_fields = ('trip__id', 'location__name')
-    ordering = ('trip__start_time',)
+    ordering = ('trip__start_dt',)

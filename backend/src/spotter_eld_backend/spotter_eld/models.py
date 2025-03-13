@@ -1,6 +1,9 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from helper.common.constants import TripStatus
+
+
 class Driver(models.Model):
     name = models.CharField(max_length=255)
     license_number = models.CharField(max_length=50, unique=True)
@@ -38,6 +41,11 @@ class Location(models.Model):
         return self.name
 
 class Trip(models.Model):
+
+    STATUS_CHOICES = (
+        (TripStatus.ONGOING, "Ongoing"),
+        (TripStatus.ENDED, "Ended"),
+    )
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, related_name='trips')
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='trips')
     start_location = models.ForeignKey(
@@ -46,8 +54,8 @@ class Trip(models.Model):
     end_location = models.ForeignKey(
         Location, on_delete=models.CASCADE, related_name='end_trips'
     )
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField(blank=True, null=True)
+    start_dt = models.DateTimeField()
+    end_dt = models.DateTimeField(blank=True, null=True)
     distance = models.FloatField(help_text="Distance in miles")
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)
@@ -55,9 +63,9 @@ class Trip(models.Model):
     def __str__(self):
         return f"Trip {self.id} by {self.driver.name}"
 
-class DriverLog(models.Model):
+class DriverHos(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, related_name='logs')
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='logs')
+    # trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='logs')
     date = models.DateField()
     total_driving_hours = models.FloatField(
         validators=[MinValueValidator(0), MaxValueValidator(11)]  # 11-hour driving limit
@@ -74,8 +82,8 @@ class DriverLog(models.Model):
 
 class RestBreak(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='restbreaks')
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    start_dt = models.DateTimeField()
+    end_dt = models.DateTimeField()
     duration = models.FloatField(help_text="Duration in hours")
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)
@@ -87,8 +95,8 @@ class RestBreak(models.Model):
 class Fueling(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='fuelings')
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='fuelings')
-    fuel_amount = models.FloatField(help_text="Fuel amount in gallons")
-    fuel_cost = models.FloatField(help_text="Fuel cost in dollars")
+    amount = models.FloatField(help_text="Fuel amount in gallons")
+    cost = models.FloatField(help_text="Fuel cost in dollars")
     mileage_dt_fueling = models.IntegerField(help_text="Mileage at the time of fueling")
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)

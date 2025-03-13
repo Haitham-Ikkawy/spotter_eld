@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from spotter_eld.models import Driver, Vehicle, Location, Trip, DriverLog, RestBreak, Fueling
+from spotter_eld.models import Driver, Vehicle, Location, Trip, DriverHos, RestBreak, Fueling
 
 
 # Driver Serializer
@@ -43,7 +43,7 @@ class TripListSerializer(serializers.ModelSerializer):
 # DriverLog Serializer
 class DriverLogSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DriverLog
+        model = DriverHos
         fields = '__all__'
 
 

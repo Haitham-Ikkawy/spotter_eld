@@ -1,48 +1,81 @@
 import axios from "axios";
-import Tools from "./Tools";
+import { toast } from "react-toastify"; // Import toast notifications
 
-const delay_fn = (n) => new Promise(r => setTimeout(r, n));
-
-async function getDeviceId() {
-    let device_id = localStorage.getItem('device-id')
-    if (device_id == null) {
-        device_id = Tools.setBrowserFingerprint()
-        if (!device_id) {
-            await delay_fn(1000);
-            device_id = localStorage.getItem('device-id')
-        }
-        if (!device_id) {
-            device_id = localStorage.getItem('device-id')
-            // location.reload();
-        }
-    }
-    return device_id
-}
-
-const headers = {
-    // 'app-version': 1,
-    // 'device-type': "web",
-    // 'auth-token': localStorage.getItem('auth-token'),
-    // 'device-id': await getDeviceId(),
-}
-
-
-// let baseURL = process.env.BaseUrl
+const BASE_URL = "http://127.0.0.1:8000/api/";
+// const BASE_URL = "https://haithamakk.pythonanywhere.com/api/";
 
 const ApiRequest = axios.create({
-    baseURL: "https://haithamakk.pythonanywhere.com/api/",
+    baseURL: BASE_URL,
     timeout: 60000,
-    headers: headers,
 });
 
+// Function to get token from local storage
+const getAccessToken = () => localStorage.getItem("access_token");
+const getRefreshToken = () => localStorage.getItem("refresh_token");
 
+// Function to refresh the token
+const refreshToken = async () => {
+    try {
+        const refresh = getRefreshToken();
+        if (!refresh) throw new Error("No refresh token available");
+
+        const response = await axios.post(`${BASE_URL}token/refresh/`, {
+            refresh: refresh,
+        });
+
+        const newAccessToken = response.data.access;
+        localStorage.setItem("access_token", newAccessToken);
+        return newAccessToken;
+    } catch (error) {
+        console.error("Refresh token failed:", error);
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        window.location.href = "/login"; // Redirect to login page
+        return null;
+    }
+};
+
+// Request interceptor to add Authorization header
 ApiRequest.interceptors.request.use(
-    function (config) {
+    (config) => {
+        const token = getAccessToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
     },
-    function (error) {
+    (error) => Promise.reject(error)
+);
+
+// Response interceptor to handle token expiration
+ApiRequest.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        // If token is expired and the request has not been retried yet
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true; // Mark request as retried
+
+            const newAccessToken = await refreshToken();
+            if (newAccessToken) {
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return ApiRequest(originalRequest); // Retry the failed request
+            }
+        }
+
+        console.log(error.response.data)
+
+                // Extract error message for toast notification
+        const errorMessage =
+            error.response?.data?.detail || // Django default error message
+            error.response?.data?.message || // Other API error messages
+            "An unexpected error occurred."; // Default message
+
+        toast.error(errorMessage); // Show error message in toast
+
         return Promise.reject(error);
-    },
+    }
 );
 
 export default ApiRequest;
