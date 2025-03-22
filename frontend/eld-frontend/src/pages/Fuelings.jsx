@@ -1,42 +1,37 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Container, FormControl, IconButton, InputLabel, Menu, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
+import {Box, Button, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
-import {GetRestBreak, GetRestBreakFormData, insertRestBreak, endRestBreak} from "../services/Api.js";
+import {GetFueling, GetFuelingFormData, insertFueling} from "../services/Api.js";
 import {toast} from "react-toastify";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Constants from "../common/constants.js";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import HotelIcon from "@mui/icons-material/Hotel";
 
-function RestBreaks() {
+function Fuelings() {
 
-    const [restBreaks, setRestBreak] = useState([]);
+    const [fuelings, setFuelings] = useState([]);
     const [modalOpened, setModalOpened] = useState(false);
     const [locations, setLocations] = useState([]);
     const [trips, setTrips] = useState([]);
-
-    const [anchorEl, setAnchorEl] = useState(null);
-
-    const [selectedRestBreak, setSelectedRestBreak] = useState(null);
     const MAX_HOURS = 70;
 
-    const [newRestBreak, setNewRestBreak] = useState({
+    const [newFueling, setNewFueling] = useState({
         trip: "",
         location: "",
-        duration: ""
+        amount: "",
+        cost: "",
+        mileage_at_fueling: "",
     });
 
-    // Fetch restBreaks from the backend
+    // Fetch fuelings from the backend
     useEffect(() => {
-        getRestBreakFn()
+        getFuelingFn()
     }, []);
 
 
     useEffect(() => {
         if (modalOpened) {
-            GetRestBreakFormData({})
+            GetFuelingFormData({})
                 .then((response) => {
                     setTrips(response.data.trips)
                     setLocations(response.data.locations)
@@ -46,10 +41,10 @@ function RestBreaks() {
     }, [modalOpened]);
 
 
-    const getRestBreakFn = () => {
-        GetRestBreak({})
+    const getFuelingFn = () => {
+        GetFueling({})
             .then((response) => {
-                setRestBreak(response.data);
+                setFuelings(response.data);
             })
             .catch((error) => {
                 // toast.error(error.response);
@@ -62,7 +57,7 @@ function RestBreaks() {
                 (position) => {
                     const location = `${position.coords.latitude}, ${position.coords.longitude}`;
                     setCurrentLocation(location);
-                    setNewRestBreak((prev) => ({...prev, start_location: location}));
+                    setNewFueling((prev) => ({...prev, start_location: location}));
                 },
                 (error) => {
                     toast.error(Constants.TOASTS.ERROR.LOCATION_DETECTION_FAILED);
@@ -75,62 +70,35 @@ function RestBreaks() {
 
     const handleInputChange = (e) => {
         const {name, value} = e.target;
-        setNewRestBreak({...newRestBreak, [name]: value});
+        setNewFueling({...newFueling, [name]: value});
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (newFueling.current_cycle_used >= MAX_HOURS) {
+            toast.error(Constants.TOASTS.ERROR.DRIVERS_HOUR_LIMIT_EXCEEDED);
+            return;
+        }
 
         try {
-            insertRestBreak(newRestBreak)
+            insertFueling(newFueling)
                 .then((response) => {
-                    toast.success(Constants.TOASTS.SUCCESS.REST_BREAK_CREATION_SUCCESS);
+                    toast.success(Constants.TOASTS.SUCCESS.FUEL_STOP_CREATION_SUCCESS);
 
                     setModalOpened(false);
-                    getRestBreakFn()
+                    getFuelingFn()
                 })
                 .catch((error) => {
                     toast.error(error.response);
                 });
         } catch (error) {
-
             toast.error(Constants.TOASTS.ERROR.FUEL_STOP_CREATION_FAILED);
         }
     };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setSelectedRestBreak(null);
-    };
-
-    const handleAction = async (action) => {
-        if (!selectedRestBreak) return;
-        try {
-            if (action === "endRestBreak") {
-                endRestBreak(selectedRestBreak)
-                    .then((response) => {
-                        toast.success(Constants.TOASTS.SUCCESS.REST_BREAK_ENDED_SUCCESSFULLY);
-                    })
-                    .catch((error) => {
-                        toast.error(error.response);
-                    });
-            }
-            getRestBreakFn(); // Refresh trip list
-        } catch (error) {
-            toast.error("Action failed");
-        }
-        handleMenuClose();
-    };
-
-    const handleMenuClick = (event, restBreak) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedRestBreak(restBreak);
-    };
-
-
     return (
         <Container>
-            <PageTitle title="Rest Breaks"/>
+            <PageTitle title="Fuelings"/>
             <Box display="flex" justifyContent="flex-end" my={2}>
                 <Button
                     variant="contained"
@@ -141,14 +109,14 @@ function RestBreaks() {
                     Start NEW
                 </Button>
             </Box>
-            <ModalLayout title={"New Rest Break"} modalOpened={modalOpened} setModalOpened={setModalOpened}>
+            <ModalLayout title={"New Fueling Stop"} modalOpened={modalOpened} setModalOpened={setModalOpened}>
 
                 <Box component="form" onSubmit={handleSubmit}>
 
 
                     <FormControl fullWidth margin="normal">
                         <InputLabel>Trip</InputLabel>
-                        <Select name="trip" value={newRestBreak.trip} onChange={handleInputChange} required>
+                        <Select name="trip" value={newFueling.trip} onChange={handleInputChange} required>
                             {trips.map((trip) => (
                                 <MenuItem key={trip.id} value={trip.id}>
                                     {trip.driver.name} / {trip.start_dt}
@@ -160,7 +128,7 @@ function RestBreaks() {
 
                     <FormControl fullWidth margin="normal">
                         <InputLabel>Location</InputLabel>
-                        <Select name="location" value={newRestBreak.location} onChange={handleInputChange} required>
+                        <Select name="location" value={newFueling.location} onChange={handleInputChange} required>
                             {locations.map((location) => (
                                 <MenuItem key={location.id} value={location.id}>
                                     {location.name}
@@ -169,10 +137,20 @@ function RestBreaks() {
                         </Select>
                     </FormControl>
 
+                    {/* Current Cycle Used */}
+                    <TextField type="number"
+                        // inputProps={{min: 0, max: 100}} // Sets UI constraints
+                               label="amount" name="amount" value={newFueling.amount} onChange={handleInputChange} fullWidth margin="normal" required/>
+
 
                     <TextField type="number"
                         // inputProps={{min: 0, max: 100}} // Sets UI constraints
-                               label="duration" name="duration" value={newRestBreak.duration} onChange={handleInputChange} fullWidth margin="normal" required/>
+                               label="cost" name="cost" value={newFueling.cost} onChange={handleInputChange} fullWidth margin="normal" required/>
+
+
+                    <TextField type="number"
+                        // inputProps={{min: 0, max: 100}} // Sets UI constraints
+                               label="current mileage" name="mileage_at_fueling" value={newFueling.mileage_at_fueling} onChange={handleInputChange} fullWidth margin="normal" required/>
 
                     <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
                         Add Fuel Stop
@@ -189,39 +167,30 @@ function RestBreaks() {
                             <TableCell>ID</TableCell>
                             <TableCell>Trip</TableCell>
                             <TableCell>Location</TableCell>
-                            <TableCell>Duration</TableCell>
+                            <TableCell>Amount</TableCell>
+                            <TableCell>Cost</TableCell>
+                            <TableCell>Milage</TableCell>
                             <TableCell>Date</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {restBreaks.map(restBreak => (
-                            <TableRow key={restBreak.id}>
-                                <TableCell>{restBreak.id}</TableCell>
-                                <TableCell>{restBreak.trip.id}</TableCell>
-                                <TableCell>{restBreak.location.name}</TableCell>
-                                <TableCell>{restBreak.duration} min</TableCell>
-                                <TableCell>{restBreak.created_dt}</TableCell>
-                                <TableCell>
-                                    <IconButton onClick={(e) => handleMenuClick(e, restBreak)}>
-                                        <MoreVertIcon/>
-                                    </IconButton>
-                                </TableCell>
+                        {fuelings.map(fueling => (
+                            <TableRow key={fueling.id}>
+                                <TableCell>{fueling.id}</TableCell>
+                                <TableCell>{fueling.trip.id}</TableCell>
+                                <TableCell>{fueling.location.name}</TableCell>
+                                <TableCell>{fueling.amount}</TableCell>
+                                <TableCell>{fueling.cost}</TableCell>
+                                <TableCell>{fueling.mileage_at_fueling}</TableCell>
+                                <TableCell>{fueling.created_dt}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-
-                    <MenuItem onClick={() => handleAction("endRestBreak")}>
-                        <HotelIcon sx={{mr: 1}}/> End Rest Break
-                    </MenuItem>
-
-                </Menu>
             </TableContainer>
 
         </Container>
     );
 }
 
-export default RestBreaks;
+export default Fuelings;

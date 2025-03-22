@@ -9,7 +9,9 @@ import Dashboard from "../../pages/Dashboard.jsx";
 import Locations from "../../pages/Locations.jsx";
 import Trips from "../../pages/Trips.jsx";
 import Breaks from "../../pages/Breaks.jsx";
-import Fueling from "../../pages/Fueling.jsx";
+import Fuelings from "../../pages/Fuelings.jsx";
+import RestBreaks from "../../pages/RestBreaks.jsx";
+import DriverLogSheet from "../../pages/DriverLogSheet.jsx";
 
 const AppRoutes = () => {
     const {isAuth} = useLanding(); // Get authentication state
@@ -31,8 +33,9 @@ const AppRoutes = () => {
                         <Route path={Constants.ROUTES.DASHBOARD} element={<Dashboard/>}/>
                         <Route path={Constants.ROUTES.TRIPS} element={<Trips/>}/>
                         <Route path={Constants.ROUTES.LOCATIONS} element={<Locations/>}/>
-                        <Route path={Constants.ROUTES.BREAKS} element={<Breaks/>}/>
-                        <Route path={Constants.ROUTES.FUELING} element={<Fueling/>}/>
+                        <Route path={Constants.ROUTES.BREAKS} element={<RestBreaks/>}/>
+                        <Route path={Constants.ROUTES.FUELING} element={<Fuelings/>}/>
+                        <Route path={Constants.ROUTES.LOG_SHEET} element={<DriverLogSheet/>}/>
                         {/*<Route path="/driver-logs" element={<DriverLogs/>}/>*/}
                         {/*<Route path="/vehicles" element={<Vehicles/>}/>*/}
                         {/*<Route path="/rest-breaks" element={<RestBreaks/>}/>*/}

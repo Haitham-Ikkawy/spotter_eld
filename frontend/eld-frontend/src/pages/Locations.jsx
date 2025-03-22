@@ -1,13 +1,14 @@
 import React, {useEffect, useState} from "react";
 import {getLocation, insertLocation} from "../services/Api.js";
 import {toast} from "react-toastify";
-import {Box, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography,} from "@mui/material";
+import {Box, Button, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography,} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import MapModal from "../components/modals/MapModal.jsx";
 import MapViewModal from "../components/modals/MapViewModal.jsx";
+import Constants from "../common/constants.js";
 
 function Locations() {
     const [locations, setLocations] = useState([]);
@@ -21,6 +22,7 @@ function Locations() {
         latitude: "",
         longitude: "",
         address: "",
+        type: ""
     });
 
     useEffect(() => {
@@ -93,6 +95,18 @@ function Locations() {
                         margin="normal"
                         required
                     />
+
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Location</InputLabel>
+                        <Select name="type" onChange={handleInputChange} required>
+                                <MenuItem  value={"TRIP_START"}>TRIP_START</MenuItem>
+                                <MenuItem  value={"TRIP_END"}>TRIP_END</MenuItem>
+                                <MenuItem  value={"FUELING"}>FUELING</MenuItem>
+                                <MenuItem  value={"BREAK_REST"}>BREAK_REST</MenuItem>
+                                <MenuItem  value={"FUELING"}>FUELING</MenuItem>
+                        </Select>
+                    </FormControl>
+
 
                     {/* Select Location Button - Centered */}
                     <Box sx={{display: "flex", justifyContent: "center", mt: 2}}>

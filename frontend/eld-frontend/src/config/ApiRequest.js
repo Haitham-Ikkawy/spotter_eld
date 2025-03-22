@@ -70,9 +70,10 @@ ApiRequest.interceptors.response.use(
         const errorMessage =
             error.response?.data?.detail || // Django default error message
             error.response?.data?.message || // Other API error messages
+            error.response?.data?.error || // Other API error messages
             "An unexpected error occurred."; // Default message
 
-        toast.error(errorMessage); // Show error message in toast
+        toast.warning(errorMessage); // Show error message in toast
 
         return Promise.reject(error);
     }

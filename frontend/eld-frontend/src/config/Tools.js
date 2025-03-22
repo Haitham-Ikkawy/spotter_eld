@@ -2,9 +2,9 @@ class Tools {
     constructor() {
     }
 
-        checkResponseStatus(response, successFunction, errorFunction) {
+    checkResponseStatus(response, successFunction, errorFunction) {
 
-            console.log(response)
+        console.log(response)
 
         if (response.data.status === "SUCCESS") {
             successFunction();
@@ -34,6 +34,13 @@ class Tools {
             formData.append(key, data[key]);
         }
         return formData;
+    }
+
+    buildGetURL(baseUrl, data) {
+        const queryString = new URLSearchParams(data).toString();
+        let queryParams = data ? `?${queryString}` : ""
+        return `${baseUrl}${queryParams}`
+
     }
 }
 

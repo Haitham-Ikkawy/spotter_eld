@@ -1,21 +1,45 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
+import {Box, Button, Container, FormControl, IconButton, InputLabel, Menu, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
-import {GetTrips, GetTripsFormData, insertTrips} from "../services/Api.js";
+import {canCreateTrip, endDropOff, endPickup, GetTrips, GetTripsFormData, GetTripTrace, insertTrips, startDropOff, startPickup} from "../services/Api.js";
 import {toast} from "react-toastify";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Constants from "../common/constants.js";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import MapIcon from '@mui/icons-material/Map';
+
+import * as PropTypes from "prop-types";
+import TripMapTrace from "../components/modals/TripMapTrace.jsx";
+
+function FlightTakeoffIcon(props) {
+    return null;
+}
+
+FlightTakeoffIcon.propTypes = {sx: PropTypes.shape({mr: PropTypes.number})};
+
+function FlagIcon(props) {
+    return null;
+}
+
+FlagIcon.propTypes = {sx: PropTypes.shape({mr: PropTypes.number})};
 
 function Trips() {
 
     const [trips, setTrips] = useState([]);
     const [modalOpened, setModalOpened] = useState(false);
+    const [mapTraceModalOpened, setMapTraceModalOpened] = useState(false);
     const [useManualLocation, setUseManualLocation] = useState(false);
     const [currentLocation, setCurrentLocation] = useState("");
     const [drivers, setDrivers] = useState([]);
     const [locations, setLocations] = useState([]);
     const [vehicles, setVehicles] = useState([]);
+    const [currentCycleUsed, setCurrentCycleUsed] = useState(0);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [selectedTrip, setSelectedTrip] = useState(null);
+    const [canDriverCreateTrips, setCanDriverCreateTrips] = useState(false);
+    const [serverMapTrace, setServerMapTrace] = useState(null);
     const MAX_HOURS = 70;
 
     const [newTrip, setNewTrip] = useState({
@@ -30,6 +54,7 @@ function Trips() {
     // Fetch trips from the backend
     useEffect(() => {
         getTripsFn()
+        // canCreateTripFn()
     }, []);
 
 
@@ -40,6 +65,7 @@ function Trips() {
                     setDrivers(response.data.drivers)
                     setLocations(response.data.locations)
                     setVehicles(response.data.vehicles)
+                    setCurrentCycleUsed(response.data.current_cycle_used)
 
                 })
                 .catch((error) => toast.error(error.response));
@@ -47,6 +73,30 @@ function Trips() {
     }, [modalOpened]);
 
 
+    useEffect(() => {
+        if (mapTraceModalOpened) {
+            GetTripsFormData({})
+                .then((response) => {
+                    setDrivers(response.data.drivers)
+                    setLocations(response.data.locations)
+                    setVehicles(response.data.vehicles)
+                    setCurrentCycleUsed(response.data.current_cycle_used)
+
+                })
+                .catch((error) => toast.error(error.response));
+        }
+    }, [mapTraceModalOpened]);
+    const canCreateTripFn = () => {
+        canCreateTrip({})
+            .then((response) => {
+                setCanDriverCreateTrips(response.data.can_create_trip);
+                setModalOpened(true)
+            })
+            .catch((error) => {
+                // toast.error(error.response);
+            });
+
+    }
     const getTripsFn = () => {
         GetTrips({})
             .then((response) => {
@@ -90,15 +140,84 @@ function Trips() {
             insertTrips(newTrip)
                 .then((response) => {
                     toast.success(Constants.TOASTS.SUCCESS.TRIP_CREATION_SUCCESS);
+                    setModalOpened(false);
                     getTripsFn()
                 })
                 .catch((error) => {
                     toast.error(error.response);
                 });
-            setModalOpened(false);
+            //
         } catch (error) {
             toast.error(Constants.TOASTS.ERROR.TRIP_CREATION_FAILED);
         }
+    };
+    const handleMenuClick = (event, trip) => {
+        setAnchorEl(event.currentTarget);
+        setSelectedTrip(trip);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setSelectedTrip(null);
+    };
+
+    const handleAction = async (action) => {
+        if (!selectedTrip) return;
+        try {
+            if (action === "startPickup") {
+                startPickup(selectedTrip)
+                    .then((response) => {
+                        toast.success(Constants.TOASTS.SUCCESS.PICKUP_STARTED_SUCCESSFULLY);
+                        getTripsFn()
+                    })
+                    .catch((error) => {
+                        toast.error(error.response);
+                    });
+            } else if (action === "endPickup") {
+                endPickup(selectedTrip)
+                    .then((response) => {
+                        toast.success(Constants.TOASTS.SUCCESS.PICKUP_ENDED_SUCCESSFULLY);
+                        getTripsFn()
+                    })
+                    .catch((error) => {
+                        toast.error(error.response);
+                    });
+                // toast.success("Pickup ended successfully");
+            } else if (action === "startDropoff") {
+                startDropOff(selectedTrip)
+                    .then((response) => {
+                        toast.success(Constants.TOASTS.SUCCESS.DROP_OFF_STARTED_SUCCESSFULLY);
+                        getTripsFn()
+                    })
+                    .catch((error) => {
+                        toast.error(error.response);
+                    });
+            } else if (action === "endDropoff") {
+                endDropOff(selectedTrip)
+                    .then((response) => {
+                        toast.success(Constants.TOASTS.SUCCESS.DROP_OFF_ENDED_SUCCESSFULLY);
+                        getTripsFn()
+                    })
+                    .catch((error) => {
+                        toast.error(error.response);
+                    });
+            } else if (action === "viewMapTrace") {
+                setMapTraceModalOpened(true)
+                GetTripTrace(selectedTrip)
+                    .then((response) => {
+
+                        setServerMapTrace(response.data)
+
+                    })
+                    .catch((error) => {
+                        toast.error(error.response);
+                    });
+            }
+            getTripsFn(); // Refresh trip list
+        } catch (error) {
+            toast.error("Action failed");
+        }
+        handleMenuClose();
     };
 
     return (
@@ -109,59 +228,47 @@ function Trips() {
                     variant="contained"
                     color="primary"
                     startIcon={<AddCircleIcon/>}
-                    onClick={() => setModalOpened(true)}
+                    onClick={() => {
+                        canCreateTripFn()
+                    }}
                 >
                     Start NEW
                 </Button>
             </Box>
-            <ModalLayout title={"New Trip"} modalOpened={modalOpened} setModalOpened={setModalOpened}>
 
-                <Box component="form" onSubmit={handleSubmit}>
-                    {/* Driver Selection */}
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Driver</InputLabel>
-                        <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>
-                            {drivers.map((driver) => (
-                                <MenuItem key={driver.id} value={driver.id}>
-                                    {driver.name} (Used: {driver.current_cycle_used} hrs)
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+            {canDriverCreateTrips &&
+                <ModalLayout title={"New Trip"} modalOpened={modalOpened} setModalOpened={setModalOpened}>
 
-
-                    {/* Vehicle Selection */}
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Vehicle</InputLabel>
-                        <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>
-                            {vehicles.map((vehicle) => (
-                                <MenuItem key={vehicle.id} value={vehicle.id}>
-                                    {vehicle.model}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    {/*/!* Current Location *!/*/}
-                    {/*<Button onClick={getGeoLocation} variant="outlined" fullWidth>*/}
-                    {/*    Auto-Detect Current Location*/}
-                    {/*</Button>*/}
-
-                    {/*<TextField label="start_location Location" name="start_location" value={useManualLocation ? newTrip.start_location : currentLocation} onChange={handleInputChange} fullWidth*/}
-                    {/*           margin="normal" required disabled={!useManualLocation}/>*/}
-
-                    {/*<TextField label="end_location Location" name="end_location" value={useManualLocation ? newTrip.end_location : currentLocation} onChange={handleInputChange} fullWidth*/}
-                    {/*           margin="normal" required disabled={!useManualLocation}/>*/}
+                    <Box component="form" onSubmit={handleSubmit}>
+                        {/*/!* Driver Selection *!/*/}
+                        {/*<FormControl fullWidth margin="normal">*/}
+                        {/*    <InputLabel>Driver</InputLabel>*/}
+                        {/*    <Select name="driver" value={newTrip.driver} onChange={handleInputChange} required>*/}
+                        {/*        {drivers.map((driver) => (*/}
+                        {/*            <MenuItem key={driver.id} value={driver.id}>*/}
+                        {/*                {driver.name} (Used: {driver.current_cycle_used} hrs)*/}
+                        {/*            </MenuItem>*/}
+                        {/*        ))}*/}
+                        {/*    </Select>*/}
+                        {/*</FormControl>*/}
 
 
-                    <Button onClick={() => {
-                        useManualLocation ? getGeoLocation() : ""
-                        setUseManualLocation(!useManualLocation)
-                    }}>{useManualLocation ? "Use Auto-detect" : "Enter Manually"}</Button>
-                    {/*/!* start_location Selection *!/*/}
-                    {useManualLocation ?
+                        {/* Vehicle Selection */}
                         <FormControl fullWidth margin="normal">
-                            <InputLabel>Location</InputLabel>
+                            <InputLabel>Vehicle</InputLabel>
+                            <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>
+                                {vehicles.map((vehicle) => (
+                                    <MenuItem key={vehicle.id} value={vehicle.id}>
+                                        {vehicle.name} / {vehicle.model} / {vehicle.year}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        {/*/!* Current Location *!/*/}
+
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>Start Location</InputLabel>
                             <Select name="start_location" value={newTrip.start_location} onChange={handleInputChange} required>
                                 {locations.map((location) => (
                                     <MenuItem key={location.id} value={location.id}>
@@ -169,39 +276,42 @@ function Trips() {
                                     </MenuItem>
                                 ))}
                             </Select>
-                        </FormControl> :
+                        </FormControl>
 
-                        <TextField label="Pickup Location" name="start_location" value={newTrip.start_location} onChange={handleInputChange} fullWidth margin="normal" required/>
+                        {/* end_location Selection */}
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>End Location</InputLabel>
+                            <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>
+                                {locations.map((location) => (
+                                    <MenuItem key={location.id} value={location.id}>
+                                        {location.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                    }
-                    {/* end_location Selection */}
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Location</InputLabel>
-                        <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>
-                            {locations.map((location) => (
-                                <MenuItem key={location.id} value={location.id}>
-                                    {location.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                        {/* Current Cycle Used */}
+                        <TextField type="number"
+                            // inputProps={{min: 0, max: 100}} // Sets UI constraints
+                                   label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>
+                        {/* Current Cycle Used */}
+                        <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={currentCycleUsed} onChange={handleInputChange} fullWidth margin="normal" required
+                                   disabled/>
 
-                    {/* Pickup & Dropoff Locations */}
-                    {/*<TextField label="Dropoff Location" name="end_location" value={newTrip.end_location} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
+                        <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
+                            Start Trip
+                        </Button>
+                    </Box>
+                </ModalLayout>
+            }
 
-                    {/* Current Cycle Used */}
-                    <TextField type="number"
-                               inputProps={{min: 0, max: 100}} // Sets UI constraints
-                               label="Distance" name="distance" value={newTrip.distance} onChange={handleInputChange} fullWidth margin="normal" required/>
-                    {/* Current Cycle Used */}
-                    <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={newTrip.current_cycle_used} onChange={handleInputChange} fullWidth margin="normal" required
-                               disabled/>
+            {serverMapTrace &&
 
-                    <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
-                        Start Trip
-                    </Button>
-                </Box>
-            </ModalLayout>
+                <ModalLayout title={"Map Trace Modal"} modalOpened={mapTraceModalOpened} setModalOpened={setMapTraceModalOpened}>
+
+                    <TripMapTrace tripTrace={serverMapTrace}/>
+                </ModalLayout>
+            }
 
 
             {/* Trips Table */}
@@ -225,15 +335,56 @@ function Trips() {
                                 <TableCell>{trip.id}</TableCell>
                                 <TableCell>{trip.driver.name}</TableCell>
                                 <TableCell>{trip.vehicle.model}</TableCell>
-                                <TableCell>{trip.start_location}</TableCell>
-                                <TableCell>{trip.end_location}</TableCell>
-                                <TableCell>{trip.start_time}</TableCell>
-                                <TableCell>{trip.end_time}</TableCell>
-                                {/*<TableCell>{trip.distance}</TableCell>*/}
+                                <TableCell>{trip.start_location.name}</TableCell>
+                                <TableCell>{trip.end_location.name}</TableCell>
+                                <TableCell>{trip.start_dt}</TableCell>
+                                <TableCell>{trip.end_dt}</TableCell>
+                                <TableCell>{trip.distance}</TableCell>
+                                <TableCell>
+                                    <IconButton onClick={(e) => handleMenuClick(e, trip)}>
+                                        <MoreVertIcon/>
+                                    </IconButton>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
+
+                {/*<Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>*/}
+                {/*    <MenuItem onClick={() => handleAction("endPickup")}><LocalShippingIcon sx={{mr: 1}}/> End Pickup</MenuItem>*/}
+                {/*    <MenuItem onClick={() => handleAction("startDropoff")}><FlightTakeoffIcon sx={{mr: 1}}/> Start Dropoff</MenuItem>*/}
+                {/*    <MenuItem onClick={() => handleAction("endDropoff")}><FlagIcon sx={{mr: 1}}/> End Dropoff</MenuItem>*/}
+                {/*</Menu>*/}
+
+
+                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                    {selectedTrip?.show_start_pickup && (
+                        <MenuItem onClick={() => handleAction("startPickup")}>
+                            <LocalShippingIcon sx={{mr: 1}}/> Start Pickup
+                        </MenuItem>
+                    )}
+
+
+                    {selectedTrip?.show_end_pickup && (
+                        <MenuItem onClick={() => handleAction("endPickup")}>
+                            <LocalShippingIcon sx={{mr: 1}}/> End Pickup
+                        </MenuItem>
+                    )}
+                    {selectedTrip?.show_start_drop_off && (
+                        <MenuItem onClick={() => handleAction("startDropoff")}>
+                            <FlightTakeoffIcon sx={{mr: 1}}/> Start Dropoff
+                        </MenuItem>
+                    )}
+                    {selectedTrip?.show_end_drop_off && (
+                        <MenuItem onClick={() => handleAction("endDropoff")}>
+                            <FlagIcon sx={{mr: 1}}/> End Dropoff
+                        </MenuItem>
+                    )}
+
+                    <MenuItem onClick={() => handleAction("viewMapTrace")}>
+                        <MapIcon sx={{mr: 1}}/> View Map Trace
+                    </MenuItem>
+                </Menu>
             </TableContainer>
 
         </Container>
