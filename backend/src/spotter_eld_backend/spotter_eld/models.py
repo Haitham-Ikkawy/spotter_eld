@@ -1,10 +1,12 @@
-from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 
-from helper.common.constants import TripStatus
+from helper.common.constants import TripStatus, LocationType
 
 
 class Driver(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="driver_profile")
     name = models.CharField(max_length=255)
     license_number = models.CharField(max_length=50, unique=True)
     current_cycle_used = models.IntegerField(
@@ -17,8 +19,9 @@ class Driver(models.Model):
     def __str__(self):
         return self.name
 
+
 class Vehicle(models.Model):
-    make = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     model = models.CharField(max_length=100)
     year = models.IntegerField()
     vin = models.CharField(max_length=17, unique=True)  # Vehicle Identification Number
@@ -27,21 +30,29 @@ class Vehicle(models.Model):
     updated_dt = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.year} {self.make} {self.model}"
+        return f"{self.year} {self.name} {self.model}"
+
 
 class Location(models.Model):
+    TYPE_CHOICES = (
+        (LocationType.TRIP_START, "Trip Start"),
+        (LocationType.TRIP_END, "Trip End"),
+        (LocationType.FUELING, "Fueling"),
+        (LocationType.BREAK_REST, "break Rest"),
+    )
     name = models.CharField(max_length=255)
     latitude = models.FloatField()
     longitude = models.FloatField()
     address = models.TextField(blank=True, null=True)
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default=LocationType.TRIP_START)
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
 
-class Trip(models.Model):
 
+class Trip(models.Model):
     STATUS_CHOICES = (
         (TripStatus.ONGOING, "Ongoing"),
         (TripStatus.ENDED, "Ended"),
@@ -56,12 +67,23 @@ class Trip(models.Model):
     )
     start_dt = models.DateTimeField()
     end_dt = models.DateTimeField(blank=True, null=True)
+
+    pickup_start_dt = models.DateTimeField(blank=True, null=True)
+    pickup_end_dt = models.DateTimeField(blank=True, null=True)
+    pickup_duration = models.FloatField(default=1.0, help_text="Pickup duration in minutes")  # Default 1 hour
+
+    drop_off_start_dt = models.DateTimeField(blank=True, null=True)
+    drop_off_end_dt = models.DateTimeField(blank=True, null=True)
+    drop_off_duration = models.FloatField(default=1.0, help_text="Drop-off duration in minutes")
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=TripStatus.ONGOING)
     distance = models.FloatField(help_text="Distance in miles")
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Trip {self.id} by {self.driver.name}"
+
 
 class DriverHos(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, related_name='logs')
@@ -82,14 +104,16 @@ class DriverHos(models.Model):
 
 class RestBreak(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='restbreaks')
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='restbreaks')
     start_dt = models.DateTimeField()
-    end_dt = models.DateTimeField()
-    duration = models.FloatField(help_text="Duration in hours")
+    end_dt = models.DateTimeField(blank=True, null=True)
+    duration = models.FloatField(help_text="Duration in minutes", null=True, blank=True)
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Rest break for {self.driver_log.driver.name} on {self.driver_log.date}"
+
 
 # Fueling Model
 class Fueling(models.Model):
@@ -97,7 +121,8 @@ class Fueling(models.Model):
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='fuelings')
     amount = models.FloatField(help_text="Fuel amount in gallons")
     cost = models.FloatField(help_text="Fuel cost in dollars")
-    mileage_dt_fueling = models.IntegerField(help_text="Mileage at the time of fueling")
+    duration = models.FloatField(help_text="Duration in minutes", null=True, blank=True)
+    mileage_at_fueling = models.IntegerField(help_text="Mileage at the time of fueling")
     created_dt = models.DateTimeField(auto_now_add=True)
     updated_dt = models.DateTimeField(auto_now=True)
 

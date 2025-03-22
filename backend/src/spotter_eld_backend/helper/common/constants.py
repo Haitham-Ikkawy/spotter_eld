@@ -31,3 +31,10 @@ class Role:
 class TripStatus:
     ONGOING = "ONGOING"
     ENDED = "ENDED"
+
+
+class LocationType:
+    TRIP_START = "TRIP_START"
+    TRIP_END = "TRIP_END"
+    BREAK_REST = "BREAK_REST"
+    FUELING = "FUELING"

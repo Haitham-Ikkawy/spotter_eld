@@ -24,20 +24,27 @@
 #     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
 #     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 # ]
-from django.db import router
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from .views import trip, fueling, rest_break, location
+from .views.auth import login_user, register_user
 from .views.eld import (
     driver_list, driver_detail, vehicle_list, vehicle_detail,
     location_list, location_detail, trip_list, trip_detail,
     driverlog_list, driverlog_detail, restbreak_list, restbreak_detail,
-    fueling_list,trip_form_data
+    fueling_list, trip_form_data
     # fueling_detail
 )
-from .views.auth import login_user, register_user
 
 urlpatterns = [
+
+    # Trip Endpoints
+    path('trips/', include(trip.urls)),
+    # Trip Endpoints
+    path('fueling/', include(fueling.urls)),
+    path('rest_breaks/', include(rest_break.urls)),
+    path('locations/', include(location.urls)),
 
     # path('', include(router.urls)),
     path('login/', login_user, name="login"),
