@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
+import {Box, Button, CircularProgress, Container, FormControl, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
 import {GetFueling, GetFuelingFormData, insertFueling} from "../services/Api.js";
 import {toast} from "react-toastify";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Constants from "../common/constants.js";
+import {Autocomplete} from "@mui/lab";
 
 function Fuelings() {
 
@@ -13,6 +14,8 @@ function Fuelings() {
     const [modalOpened, setModalOpened] = useState(false);
     const [locations, setLocations] = useState([]);
     const [trips, setTrips] = useState([]);
+
+    const [loading, setLoading] = useState(true); // Add a loading state
     const MAX_HOURS = 70;
 
     const [newFueling, setNewFueling] = useState({
@@ -48,7 +51,11 @@ function Fuelings() {
             })
             .catch((error) => {
                 // toast.error(error.response);
-            });
+            }).finally(() => {
+
+            setLoading(false); // Stop loading
+        })
+
 
     }
     const getGeoLocation = () => {
@@ -115,26 +122,64 @@ function Fuelings() {
 
 
                     <FormControl fullWidth margin="normal">
-                        <InputLabel>Trip</InputLabel>
-                        <Select name="trip" value={newFueling.trip} onChange={handleInputChange} required>
-                            {trips.map((trip) => (
-                                <MenuItem key={trip.id} value={trip.id}>
-                                    {trip.driver.name} / {trip.start_dt}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                        {/*<InputLabel>Trip</InputLabel>*/}
+                        {/*<Select name="trip" value={newFueling.trip} onChange={handleInputChange} required>*/}
+                        {/*    {trips.map((trip) => (*/}
+                        {/*        <MenuItem key={trip.id} value={trip.id}>*/}
+                        {/*            {trip.driver.name} / {trip.start_dt}*/}
+                        {/*        </MenuItem>*/}
+                        {/*    ))}*/}
+                        {/*</Select>*/}
+
+                        {/* Searchable Trip Selector */}
+                        <Autocomplete
+                            options={trips}
+                            getOptionLabel={(option) => `${option.driver.name} / ${option.start_dt}`}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Trip"
+                                    variant="outlined"
+                                    required
+                                />
+                            )}
+                            value={trips.find((trip) => trip.id === newFueling.trip) || null}
+                            onChange={(event, newValue) =>
+                                setNewFueling({...newFueling, trip: newValue ? newValue.id : ""})
+                            }
+                        />
                     </FormControl>
 
 
                     <FormControl fullWidth margin="normal">
-                        <InputLabel>Location</InputLabel>
-                        <Select name="location" value={newFueling.location} onChange={handleInputChange} required>
-                            {locations.map((location) => (
-                                <MenuItem key={location.id} value={location.id}>
-                                    {location.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                        {/*<InputLabel>Location</InputLabel>*/}
+                        {/*<Select name="location" value={newFueling.location} onChange={handleInputChange} required>*/}
+                        {/*    {locations.map((location) => (*/}
+                        {/*        <MenuItem key={location.id} value={location.id}>*/}
+                        {/*            {location.name}*/}
+                        {/*        </MenuItem>*/}
+                        {/*    ))}*/}
+                        {/*</Select>*/}
+
+
+                        {/* Searchable Location Selector */}
+                        <Autocomplete
+                            options={locations}
+                            getOptionLabel={(option) => option.name}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Location"
+                                    variant="outlined"
+                                    required
+                                />
+                            )}
+                            value={locations.find((loc) => loc.id === newFueling.location) || null}
+                            onChange={(event, newValue) =>
+                                setNewFueling({...newFueling, location: newValue ? newValue.id : ""})
+                            }
+                        />
+
                     </FormControl>
 
                     {/* Current Cycle Used */}
@@ -158,37 +203,41 @@ function Fuelings() {
                 </Box>
             </ModalLayout>
 
-
-            {/* Trips Table */}
-            <TableContainer component={Paper} sx={{mt: 4}}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Trip</TableCell>
-                            <TableCell>Location</TableCell>
-                            <TableCell>Amount</TableCell>
-                            <TableCell>Cost</TableCell>
-                            <TableCell>Milage</TableCell>
-                            <TableCell>Date</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {fuelings.map(fueling => (
-                            <TableRow key={fueling.id}>
-                                <TableCell>{fueling.id}</TableCell>
-                                <TableCell>{fueling.trip.id}</TableCell>
-                                <TableCell>{fueling.location.name}</TableCell>
-                                <TableCell>{fueling.amount}</TableCell>
-                                <TableCell>{fueling.cost}</TableCell>
-                                <TableCell>{fueling.mileage_at_fueling}</TableCell>
-                                <TableCell>{fueling.created_dt}</TableCell>
+            {loading ? (
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                        <CircularProgress/>
+                        <Typography variant="body2" sx={{mt: 2}}>Loading trips...</Typography>
+                    </Box>
+                ) :
+                (<TableContainer component={Paper} sx={{mt: 4}}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>ID</TableCell>
+                                <TableCell>Trip</TableCell>
+                                <TableCell>Location</TableCell>
+                                <TableCell>Amount</TableCell>
+                                <TableCell>Cost</TableCell>
+                                <TableCell>Milage</TableCell>
+                                <TableCell>Date</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-
+                        </TableHead>
+                        <TableBody>
+                            {fuelings.map(fueling => (
+                                <TableRow key={fueling.id}>
+                                    <TableCell>{fueling.id}</TableCell>
+                                    <TableCell>{fueling.trip.id}</TableCell>
+                                    <TableCell>{fueling.location.name}</TableCell>
+                                    <TableCell>{fueling.amount}</TableCell>
+                                    <TableCell>{fueling.cost}</TableCell>
+                                    <TableCell>{fueling.mileage_at_fueling}</TableCell>
+                                    <TableCell>{fueling.created_dt}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>)
+            }
         </Container>
     );
 }

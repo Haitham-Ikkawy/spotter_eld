@@ -1,5 +1,23 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Container, FormControl, IconButton, InputLabel, Menu, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Container,
+    FormControl,
+    IconButton,
+    Menu,
+    MenuItem,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography
+} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
 import {canCreateTrip, endDropOff, endPickup, GetTrips, GetTripsFormData, GetTripTrace, insertTrips, startDropOff, startPickup} from "../services/Api.js";
 import {toast} from "react-toastify";
@@ -12,6 +30,7 @@ import MapIcon from '@mui/icons-material/Map';
 
 import * as PropTypes from "prop-types";
 import TripMapTrace from "../components/modals/TripMapTrace.jsx";
+import {Autocomplete} from "@mui/lab";
 
 function FlightTakeoffIcon(props) {
     return null;
@@ -40,6 +59,7 @@ function Trips() {
     const [selectedTrip, setSelectedTrip] = useState(null);
     const [canDriverCreateTrips, setCanDriverCreateTrips] = useState(false);
     const [serverMapTrace, setServerMapTrace] = useState(null);
+    const [loading, setLoading] = useState(true); // Add a loading state
     const MAX_HOURS = 70;
 
     const [newTrip, setNewTrip] = useState({
@@ -104,7 +124,10 @@ function Trips() {
             })
             .catch((error) => {
                 // toast.error(error.response);
-            });
+            }).finally(() => {
+
+            setLoading(false); // Stop loading
+        })
 
     }
     const getGeoLocation = () => {
@@ -255,39 +278,66 @@ function Trips() {
 
                         {/* Vehicle Selection */}
                         <FormControl fullWidth margin="normal">
-                            <InputLabel>Vehicle</InputLabel>
-                            <Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>
-                                {vehicles.map((vehicle) => (
-                                    <MenuItem key={vehicle.id} value={vehicle.id}>
-                                        {vehicle.name} / {vehicle.model} / {vehicle.year}
-                                    </MenuItem>
-                                ))}
-                            </Select>
+                            <Autocomplete
+                                options={vehicles}
+                                getOptionLabel={(option) => `${option.name} / ${option.model} / ${option.year}`}
+                                renderInput={(params) => <TextField {...params} label="Vehicle" variant="outlined" required/>}
+                                value={vehicles.find((v) => v.id === newTrip.vehicle) || null}
+                                onChange={(event, newValue) => setNewTrip({...newTrip, vehicle: newValue ? newValue.id : ""})}
+
+                            />
+                            {/*<InputLabel>Vehicle</InputLabel>*/}
+                            {/*<Select name="vehicle" value={newTrip.vehicle} onChange={handleInputChange} required>*/}
+                            {/*    {vehicles.map((vehicle) => (*/}
+                            {/*        <MenuItem key={vehicle.id} value={vehicle.id}>*/}
+                            {/*            {vehicle.name} / {vehicle.model} / {vehicle.year}*/}
+                            {/*        </MenuItem>*/}
+                            {/*    ))}*/}
+                            {/*</Select>*/}
                         </FormControl>
 
                         {/*/!* Current Location *!/*/}
 
                         <FormControl fullWidth margin="normal">
-                            <InputLabel>Start Location</InputLabel>
-                            <Select name="start_location" value={newTrip.start_location} onChange={handleInputChange} required>
-                                {locations.map((location) => (
-                                    <MenuItem key={location.id} value={location.id}>
-                                        {location.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
+
+                            {/*// Start Location Selection*/}
+                            <Autocomplete
+                                options={locations}
+                                getOptionLabel={(option) => option.name}
+                                renderInput={(params) => <TextField {...params} label="Start Location" variant="outlined" required/>}
+                                value={locations.find((l) => l.id === newTrip.start_location) || null}
+                                onChange={(event, newValue) => setNewTrip({...newTrip, start_location: newValue ? newValue.id : ""})}
+                            />
+                            {/*<InputLabel>Start Location</InputLabel>*/}
+                            {/*<Select name="start_location" value={newTrip.start_location} onChange={handleInputChange} required>*/}
+                            {/*    {locations.map((location) => (*/}
+                            {/*        <MenuItem key={location.id} value={location.id}>*/}
+                            {/*            {location.name}*/}
+                            {/*        </MenuItem>*/}
+                            {/*    ))}*/}
+                            {/*</Select>*/}
                         </FormControl>
 
                         {/* end_location Selection */}
                         <FormControl fullWidth margin="normal">
-                            <InputLabel>End Location</InputLabel>
-                            <Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>
-                                {locations.map((location) => (
-                                    <MenuItem key={location.id} value={location.id}>
-                                        {location.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
+                            {/*<InputLabel>End Location</InputLabel>*/}
+                            {/*<Select name="end_location" value={newTrip.end_location} onChange={handleInputChange} required>*/}
+                            {/*    {locations.map((location) => (*/}
+                            {/*        <MenuItem key={location.id} value={location.id}>*/}
+                            {/*            {location.name}*/}
+                            {/*        </MenuItem>*/}
+                            {/*    ))}*/}
+                            {/*</Select>*/}
+
+
+                            {/*// End Location Selection*/}
+                            <Autocomplete
+                                options={locations}
+                                getOptionLabel={(option) => option.name}
+                                renderInput={(params) => <TextField {...params} label="End Location" variant="outlined" required/>}
+                                value={locations.find((l) => l.id === newTrip.end_location) || null}
+                                onChange={(event, newValue) => setNewTrip({...newTrip, end_location: newValue ? newValue.id : ""})}
+                            />
                         </FormControl>
 
                         {/* Current Cycle Used */}
@@ -312,80 +362,80 @@ function Trips() {
                     <TripMapTrace tripTrace={serverMapTrace}/>
                 </ModalLayout>
             }
+            {loading ? (
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                        <CircularProgress/>
+                        <Typography variant="body2" sx={{mt: 2}}>Loading trips...</Typography>
+                    </Box>
+                ) :
+                (
+                    <TableContainer component={Paper} sx={{mt: 4}}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell>Driver</TableCell>
+                                    <TableCell>Vehicle</TableCell>
+                                    <TableCell>Start Location</TableCell>
+                                    <TableCell>End Location</TableCell>
+                                    <TableCell>Start Time</TableCell>
+                                    <TableCell>End Time</TableCell>
+                                    <TableCell>Distance (Miles)</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {trips.map(trip => (
+                                    <TableRow key={trip.id}>
+                                        <TableCell>{trip.id}</TableCell>
+                                        <TableCell>{trip.driver.name}</TableCell>
+                                        <TableCell>{trip.vehicle.model}</TableCell>
+                                        <TableCell>{trip.start_location.name}</TableCell>
+                                        <TableCell>{trip.end_location.name}</TableCell>
+                                        <TableCell>{trip.start_dt}</TableCell>
+                                        <TableCell>{trip.end_dt}</TableCell>
+                                        <TableCell>{trip.distance}</TableCell>
+                                        <TableCell>
+                                            <IconButton onClick={(e) => handleMenuClick(e, trip)}>
+                                                <MoreVertIcon/>
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
 
 
-            {/* Trips Table */}
-            <TableContainer component={Paper} sx={{mt: 4}}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Driver</TableCell>
-                            <TableCell>Vehicle</TableCell>
-                            <TableCell>Start Location</TableCell>
-                            <TableCell>End Location</TableCell>
-                            <TableCell>Start Time</TableCell>
-                            <TableCell>End Time</TableCell>
-                            <TableCell>Distance (Miles)</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {trips.map(trip => (
-                            <TableRow key={trip.id}>
-                                <TableCell>{trip.id}</TableCell>
-                                <TableCell>{trip.driver.name}</TableCell>
-                                <TableCell>{trip.vehicle.model}</TableCell>
-                                <TableCell>{trip.start_location.name}</TableCell>
-                                <TableCell>{trip.end_location.name}</TableCell>
-                                <TableCell>{trip.start_dt}</TableCell>
-                                <TableCell>{trip.end_dt}</TableCell>
-                                <TableCell>{trip.distance}</TableCell>
-                                <TableCell>
-                                    <IconButton onClick={(e) => handleMenuClick(e, trip)}>
-                                        <MoreVertIcon/>
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-
-                {/*<Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>*/}
-                {/*    <MenuItem onClick={() => handleAction("endPickup")}><LocalShippingIcon sx={{mr: 1}}/> End Pickup</MenuItem>*/}
-                {/*    <MenuItem onClick={() => handleAction("startDropoff")}><FlightTakeoffIcon sx={{mr: 1}}/> Start Dropoff</MenuItem>*/}
-                {/*    <MenuItem onClick={() => handleAction("endDropoff")}><FlagIcon sx={{mr: 1}}/> End Dropoff</MenuItem>*/}
-                {/*</Menu>*/}
+                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                            {selectedTrip?.show_start_pickup && (
+                                <MenuItem onClick={() => handleAction("startPickup")}>
+                                    <LocalShippingIcon sx={{mr: 1}}/> Start Pickup
+                                </MenuItem>
+                            )}
 
 
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                    {selectedTrip?.show_start_pickup && (
-                        <MenuItem onClick={() => handleAction("startPickup")}>
-                            <LocalShippingIcon sx={{mr: 1}}/> Start Pickup
-                        </MenuItem>
-                    )}
+                            {selectedTrip?.show_end_pickup && (
+                                <MenuItem onClick={() => handleAction("endPickup")}>
+                                    <LocalShippingIcon sx={{mr: 1}}/> End Pickup
+                                </MenuItem>
+                            )}
+                            {selectedTrip?.show_start_drop_off && (
+                                <MenuItem onClick={() => handleAction("startDropoff")}>
+                                    <FlightTakeoffIcon sx={{mr: 1}}/> Start Dropoff
+                                </MenuItem>
+                            )}
+                            {selectedTrip?.show_end_drop_off && (
+                                <MenuItem onClick={() => handleAction("endDropoff")}>
+                                    <FlagIcon sx={{mr: 1}}/> End Dropoff
+                                </MenuItem>
+                            )}
 
-
-                    {selectedTrip?.show_end_pickup && (
-                        <MenuItem onClick={() => handleAction("endPickup")}>
-                            <LocalShippingIcon sx={{mr: 1}}/> End Pickup
-                        </MenuItem>
-                    )}
-                    {selectedTrip?.show_start_drop_off && (
-                        <MenuItem onClick={() => handleAction("startDropoff")}>
-                            <FlightTakeoffIcon sx={{mr: 1}}/> Start Dropoff
-                        </MenuItem>
-                    )}
-                    {selectedTrip?.show_end_drop_off && (
-                        <MenuItem onClick={() => handleAction("endDropoff")}>
-                            <FlagIcon sx={{mr: 1}}/> End Dropoff
-                        </MenuItem>
-                    )}
-
-                    <MenuItem onClick={() => handleAction("viewMapTrace")}>
-                        <MapIcon sx={{mr: 1}}/> View Map Trace
-                    </MenuItem>
-                </Menu>
-            </TableContainer>
+                            <MenuItem onClick={() => handleAction("viewMapTrace")}>
+                                <MapIcon sx={{mr: 1}}/> View Map Trace
+                            </MenuItem>
+                        </Menu>
+                    </TableContainer>
+                )
+            }
 
         </Container>
     );

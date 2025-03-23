@@ -20,7 +20,7 @@ const GetTripsFormData = async (data) => {
 
 
 const GetDriverLogSheet = async (data) => {
-    return ApiRequest.get(Constants.API_URLS.GET_DRIVER_LOG_SHEET);
+    return ApiRequest.get(Tools.buildGetURL(Constants.API_URLS.GET_DRIVER_LOG_SHEET, data));
 };
 
 const insertTrips = async (data) => {

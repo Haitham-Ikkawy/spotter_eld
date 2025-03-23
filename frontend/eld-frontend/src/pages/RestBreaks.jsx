@@ -1,14 +1,32 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Container, FormControl, IconButton, InputLabel, Menu, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField} from "@mui/material";
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Container,
+    FormControl,
+    IconButton,
+    Menu,
+    MenuItem,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography
+} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
-import {GetRestBreak, GetRestBreakFormData, insertRestBreak, endRestBreak} from "../services/Api.js";
+import {endRestBreak, GetRestBreak, GetRestBreakFormData, insertRestBreak} from "../services/Api.js";
 import {toast} from "react-toastify";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Constants from "../common/constants.js";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import HotelIcon from "@mui/icons-material/Hotel";
+import {Autocomplete} from "@mui/lab";
 
 function RestBreaks() {
 
@@ -20,6 +38,8 @@ function RestBreaks() {
     const [anchorEl, setAnchorEl] = useState(null);
 
     const [selectedRestBreak, setSelectedRestBreak] = useState(null);
+
+    const [loading, setLoading] = useState(true); // Add a loading state
     const MAX_HOURS = 70;
 
     const [newRestBreak, setNewRestBreak] = useState({
@@ -53,7 +73,10 @@ function RestBreaks() {
             })
             .catch((error) => {
                 // toast.error(error.response);
-            });
+            }).finally(() => {
+
+            setLoading(false); // Stop loading
+        })
 
     }
     const getGeoLocation = () => {
@@ -147,26 +170,51 @@ function RestBreaks() {
 
 
                     <FormControl fullWidth margin="normal">
-                        <InputLabel>Trip</InputLabel>
-                        <Select name="trip" value={newRestBreak.trip} onChange={handleInputChange} required>
-                            {trips.map((trip) => (
-                                <MenuItem key={trip.id} value={trip.id}>
-                                    {trip.driver.name} / {trip.start_dt}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                        {/*<InputLabel>Trip</InputLabel>*/}
+                        {/*<Select name="trip" value={newRestBreak.trip} onChange={handleInputChange} required>*/}
+                        {/*    {trips.map((trip) => (*/}
+                        {/*        <MenuItem key={trip.id} value={trip.id}>*/}
+                        {/*            {trip.driver.name} / {trip.start_dt}*/}
+                        {/*        </MenuItem>*/}
+                        {/*    ))}*/}
+                        {/*</Select>*/}
+
+
+                        <Autocomplete
+                            options={trips}
+                            getOptionLabel={(option) => `${option.driver.name} / ${option.start_dt}`}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Trip" variant="outlined" required/>
+                            )}
+                            value={trips.find((trip) => trip.id === newRestBreak.trip) || null}
+                            onChange={(event, newValue) =>
+                                setNewRestBreak({...newRestBreak, trip: newValue ? newValue.id : ""})
+                            }
+                        />
                     </FormControl>
 
 
                     <FormControl fullWidth margin="normal">
-                        <InputLabel>Location</InputLabel>
-                        <Select name="location" value={newRestBreak.location} onChange={handleInputChange} required>
-                            {locations.map((location) => (
-                                <MenuItem key={location.id} value={location.id}>
-                                    {location.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                        {/*<InputLabel>Location</InputLabel>*/}
+                        {/*<Select name="location" value={newRestBreak.location} onChange={handleInputChange} required>*/}
+                        {/*    {locations.map((location) => (*/}
+                        {/*        <MenuItem key={location.id} value={location.id}>*/}
+                        {/*            {location.name}*/}
+                        {/*        </MenuItem>*/}
+                        {/*    ))}*/}
+                        {/*</Select>*/}
+
+                        <Autocomplete
+                            options={locations}
+                            getOptionLabel={(option) => option.name}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Location" variant="outlined" required/>
+                            )}
+                            value={locations.find((loc) => loc.id === newRestBreak.location) || null}
+                            onChange={(event, newValue) =>
+                                setNewRestBreak({...newRestBreak, location: newValue ? newValue.id : ""})
+                            }
+                        />
                     </FormControl>
 
 
@@ -182,44 +230,51 @@ function RestBreaks() {
 
 
             {/* Trips Table */}
-            <TableContainer component={Paper} sx={{mt: 4}}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Trip</TableCell>
-                            <TableCell>Location</TableCell>
-                            <TableCell>Duration</TableCell>
-                            <TableCell>Date</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {restBreaks.map(restBreak => (
-                            <TableRow key={restBreak.id}>
-                                <TableCell>{restBreak.id}</TableCell>
-                                <TableCell>{restBreak.trip.id}</TableCell>
-                                <TableCell>{restBreak.location.name}</TableCell>
-                                <TableCell>{restBreak.duration} min</TableCell>
-                                <TableCell>{restBreak.created_dt}</TableCell>
-                                <TableCell>
-                                    <IconButton onClick={(e) => handleMenuClick(e, restBreak)}>
-                                        <MoreVertIcon/>
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+            {loading ? (
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                        <CircularProgress/>
+                        <Typography variant="body2" sx={{mt: 2}}>Loading trips...</Typography>
+                    </Box>
+                ) :
+                (<TableContainer component={Paper} sx={{mt: 4}}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell>Trip</TableCell>
+                                    <TableCell>Location</TableCell>
+                                    <TableCell>Duration</TableCell>
+                                    <TableCell>Date</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {restBreaks.map(restBreak => (
+                                    <TableRow key={restBreak.id}>
+                                        <TableCell>{restBreak.id}</TableCell>
+                                        <TableCell>{restBreak.trip.id}</TableCell>
+                                        <TableCell>{restBreak.location.name}</TableCell>
+                                        <TableCell>{restBreak.duration} min</TableCell>
+                                        <TableCell>{restBreak.created_dt}</TableCell>
+                                        <TableCell>
+                                            <IconButton onClick={(e) => handleMenuClick(e, restBreak)}>
+                                                <MoreVertIcon/>
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
 
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
 
-                    <MenuItem onClick={() => handleAction("endRestBreak")}>
-                        <HotelIcon sx={{mr: 1}}/> End Rest Break
-                    </MenuItem>
+                            <MenuItem onClick={() => handleAction("endRestBreak")}>
+                                <HotelIcon sx={{mr: 1}}/> End Rest Break
+                            </MenuItem>
 
-                </Menu>
-            </TableContainer>
-
+                        </Menu>
+                    </TableContainer>
+                )
+            }
         </Container>
     );
 }

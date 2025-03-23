@@ -1,14 +1,31 @@
 import React, {useEffect, useState} from "react";
 import {getLocation, insertLocation} from "../services/Api.js";
 import {toast} from "react-toastify";
-import {Box, Button, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography,} from "@mui/material";
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Container,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography,
+} from "@mui/material";
 import PageTitle from "../components/shared/PageTitle.jsx";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import MapModal from "../components/modals/MapModal.jsx";
 import MapViewModal from "../components/modals/MapViewModal.jsx";
-import Constants from "../common/constants.js";
 
 function Locations() {
     const [locations, setLocations] = useState([]);
@@ -16,6 +33,8 @@ function Locations() {
     const [mapOpened, setMapOpened] = useState(false);
     const [mapViewOpened, setMapViewOpened] = useState(false);
     const [viewLocation, setViewLocation] = useState(null);
+
+    const [loading, setLoading] = useState(true); // Add a loading state
 
     const [newLocation, setNewLocation] = useState({
         name: "",
@@ -32,7 +51,11 @@ function Locations() {
             })
             .catch((error) => {
                 toast.error(error.response);
-            });
+            }).finally(() => {
+
+            setLoading(false); // Stop loading
+        })
+
     }, []);
 
 
@@ -99,11 +122,10 @@ function Locations() {
                     <FormControl fullWidth margin="normal">
                         <InputLabel>Location</InputLabel>
                         <Select name="type" onChange={handleInputChange} required>
-                                <MenuItem  value={"TRIP_START"}>TRIP_START</MenuItem>
-                                <MenuItem  value={"TRIP_END"}>TRIP_END</MenuItem>
-                                <MenuItem  value={"FUELING"}>FUELING</MenuItem>
-                                <MenuItem  value={"BREAK_REST"}>BREAK_REST</MenuItem>
-                                <MenuItem  value={"FUELING"}>FUELING</MenuItem>
+                            <MenuItem value={"TRIP_START"}>Trip Start</MenuItem>
+                            <MenuItem value={"TRIP_END"}>Trip End</MenuItem>
+                            <MenuItem value={"FUELING"}>Fueling</MenuItem>
+                            <MenuItem value={"BREAK_REST"}>Break Rest</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -162,42 +184,53 @@ function Locations() {
             )}
 
             {/* Locations Table */}
-            <TableContainer component={Paper} sx={{mt: 4}}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Latitude</TableCell>
-                            <TableCell>Longitude</TableCell>
-                            <TableCell>Address</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {locations.map((loc) => (
-                            <TableRow key={loc.id}>
-                                <TableCell>{loc.id}</TableCell>
-                                <TableCell>{loc.name}</TableCell>
-                                <TableCell>{loc.latitude}</TableCell>
-                                <TableCell>{loc.longitude}</TableCell>
-                                <TableCell>{loc.address}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="outlined"
-                                        color="secondary"
-                                        startIcon={<VisibilityIcon/>}
-                                        onClick={() => {
-                                            setViewLocation({lat: loc.latitude, lng: loc.longitude})
-                                        }}
-                                    >
-                                        View
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+
+            {loading ? (
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                        <CircularProgress/>
+                        <Typography variant="body2" sx={{mt: 2}}>Loading trips...</Typography>
+                    </Box>
+                ) :
+                (
+                    <TableContainer component={Paper} sx={{mt: 4}}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Latitude</TableCell>
+                                    <TableCell>Longitude</TableCell>
+                                    <TableCell>Address</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {locations.map((loc) => (
+                                    <TableRow key={loc.id}>
+                                        <TableCell>{loc.id}</TableCell>
+                                        <TableCell>{loc.name}</TableCell>
+                                        <TableCell>{loc.latitude}</TableCell>
+                                        <TableCell>{loc.longitude}</TableCell>
+                                        <TableCell>{loc.address}</TableCell>
+                                        <TableCell>
+                                            <Button
+                                                variant="outlined"
+                                                color="secondary"
+                                                startIcon={<VisibilityIcon/>}
+                                                onClick={() => {
+                                                    setViewLocation({lat: loc.latitude, lng: loc.longitude})
+                                                }}
+                                            >
+                                                View
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                )
+            }
         </Container>
     );
 }

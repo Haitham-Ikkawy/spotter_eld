@@ -1,29 +1,38 @@
 import React from 'react';
-import {Box, Modal, Typography} from '@mui/material';
-import {useLanding} from "../../contexts/LandingContext.jsx";
+import { Box, Modal, Typography, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { useLanding } from "../../contexts/LandingContext.jsx";
 
-function ModalLayout(props) {
+function ModalLayout({ title, modalOpened, setModalOpened, children }) {
+    const { isMobile } = useLanding();
 
-    const {title, modalOpened, setModalOpened, children} = props;
-
-    const {isMobile} = useLanding(); // Get authentication state
-
-    let mobileStyle = {
+    const boxStyle = {
         position: "absolute",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: 300,
+        width: isMobile ? 300 : 600,
         bgcolor: "background.paper",
         p: 4,
-        borderRadius: 2
-    }
-    let desktopStyle = {position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 600, bgcolor: "background.paper", p: 4, borderRadius: 2}
-    const boxStyle = isMobile ? mobileStyle : desktopStyle
+        borderRadius: 2,
+        boxShadow: 24
+    };
+
+    const handleClose = (event, reason) => {
+        if (reason !== "backdropClick") {
+            setModalOpened(false);
+        }
+    };
+
     return (
-        <Modal open={modalOpened} onClose={() => setModalOpened(false)}>
+        <Modal open={modalOpened} onClose={handleClose}>
             <Box sx={boxStyle}>
-                {title && <Typography variant="h6" gutterBottom>{title}</Typography>}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    {title && <Typography variant="h6">{title}</Typography>}
+                    <IconButton onClick={() => setModalOpened(false)} size="small">
+                        <CloseIcon />
+                    </IconButton>
+                </Box>
                 {children}
             </Box>
         </Modal>

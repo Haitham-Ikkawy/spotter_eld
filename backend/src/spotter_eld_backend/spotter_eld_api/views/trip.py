@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from helper.common.constants import RequestTypes, TripStatus, LocationType
 from helper.decorators.api_decorators import driver_profile_required
-from spotter_eld.models import Vehicle, Location, Trip, Driver
+from spotter_eld.models import Vehicle, Location, Trip, Driver, DriverHos, RestBreak, Fueling
 from .serializers import (
     VehicleSerializer, LocationSerializer,
     TripSerializer, TripListSerializer
@@ -157,6 +157,7 @@ def update_trip(request, pk):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@driver_profile_required
 def start_pickup(request):
     try:
 
@@ -194,12 +195,13 @@ def start_pickup(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@driver_profile_required
 def end_pickup(request):
     try:
-
         data = request.data.copy()
 
         trip = Trip.objects.get(id=data.get('id'))
+
         # Ensure the trip is ongoing and pickup is not yet completed
         if trip.pickup_end_dt:
             return Response(
@@ -213,14 +215,26 @@ def end_pickup(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Calculate pickup duration
+        # Calculate pickup duration in minutes
         trip.pickup_end_dt = now()
-        pickup_duration = (trip.pickup_end_dt - trip.pickup_start_dt).total_seconds() / 3600  # Convert to hours
-        trip.pickup_duration = max(1.0, round(pickup_duration, 2))  # Minimum 1 hour
+        pickup_duration_minutes = (trip.pickup_end_dt - trip.pickup_start_dt).total_seconds() / 60  # Convert to minutes
+        trip.pickup_duration = max(60, round(pickup_duration_minutes, 2))  # Minimum 60 minutes
+
+        # Check for violations
+        violations = []
+        if trip.pickup_duration > 60:
+            violations.append(f"Pickup duration exceeded: {trip.pickup_duration} minutes")
+
+        # Save violations
+        trip.violations = ", ".join(violations) if violations else ""  # Store as a comma-separated string
         trip.save()
 
         return Response(
-            {"message": "Pickup ended successfully.", "pickup_duration": trip.pickup_duration},
+            {
+                "message": "Pickup ended successfully.",
+                "pickup_duration": trip.pickup_duration,
+                "violations": trip.violations
+            },
             status=status.HTTP_200_OK
         )
 
@@ -276,6 +290,8 @@ def end_drop_off(request):
     try:
         data = request.data.copy()
 
+        driver = request.user.driver_profile
+
         trip = Trip.objects.get(id=data.get('id'))
 
         # Ensure the trip is ongoing and pickup is not yet completed
@@ -295,14 +311,34 @@ def end_drop_off(request):
         trip.drop_off_end_dt = now()
         trip.end_dt = now()
         trip.status = TripStatus.ENDED
-        drop_off_duration = (trip.drop_off_end_dt - trip.drop_off_start_dt).total_seconds() / 3600  # Convert to hours
-        trip.drop_off_duration = max(1.0, round(drop_off_duration, 2))  # Minimum 1 hour
+        drop_off_duration = (trip.drop_off_end_dt - trip.drop_off_start_dt).total_seconds() / 60  # Convert to minutes
+        trip.drop_off_duration = max(60, round(drop_off_duration, 2))  # Minimum 1 hour
+        # Check for violations
+        violations = [trip.violations]
+        if trip.drop_off_duration > 60:
+            violations.append(f"Drop off duration exceeded: {trip.drop_off_duration} minutes")
+
+        # Save violations
+        trip.violations = ", ".join(violations) if violations else ""  # Store as a comma-separated string
         trip.save()
 
-        return Response(
-            {"message": "Drop Off ended successfully.", "Drop Off": trip.drop_off_duration},
-            status=status.HTTP_200_OK
+        # Calculate total driving and on-duty hours for the trip
+        total_driving_hours = trip.total_driving_hours()
+        total_on_duty_hours = trip.total_on_duty_hours()
+
+        # Create a DriverHos record for the trip
+        driver_hos = DriverHos.objects.create(
+            driver=driver,
+            date=trip.start_dt.date(),
+            total_driving_hours=total_driving_hours,
+            total_on_duty_hours=total_on_duty_hours
         )
+
+        if trip and driver_hos:
+            return Response(
+                {"message": "Drop Off ended successfully.", "Drop Off": trip.drop_off_duration},
+                status=status.HTTP_200_OK
+            )
 
     except Trip.DoesNotExist:
         return Response(
@@ -327,6 +363,8 @@ def can_create_trip(request):
     # Validate the 70-hour/8-day limit
     last_8_days = now() - timedelta(days=8)
 
+    driver_obj = Driver.objects.filter(pk=driver.id).first()
+
     # Calculate total hours worked
     total_hours_worked = (
             Trip.objects.filter(driver=driver, end_dt__isnull=False, start_dt__gte=last_8_days)
@@ -335,7 +373,11 @@ def can_create_trip(request):
             ['total_hours'] or 0
     )
 
-    if total_hours_worked >= 70:
+    driver_obj.current_cycle_used = total_hours_worked
+    driver_obj.save()
+    driver_obj.refresh_from_db()
+
+    if driver_obj.current_cycle_used >= 70:
         return Response(
             {"error": "Driver has reached the 70-hour limit for the last 8 days. Cannot start a new trip."},
             status=status.HTTP_400_BAD_REQUEST
@@ -399,12 +441,7 @@ def get_trip_trace(request):
         "driver": trip.driver.id,
         "actions": actions
     })
-from django.utils.timezone import now
-from datetime import timedelta
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -416,87 +453,258 @@ def get_driver_log_sheet(request):
     if not log_date:
         return Response({"error": "date is required."}, status=400)
 
-    # Fetch driver and logs
-    driver = get_object_or_404(Driver.objects.prefetch_related('trips', 'hos_logs'), id=driver.id)
-    last_8_days = now() - timedelta(days=8)
-    trips = driver.trips.filter(start_dt__gte=last_8_days)
-    hos_logs = driver.hos_logs.filter(date=log_date)
+    try:
+        # Fetch driver and related data
+        trips = Trip.objects.filter(driver=driver, created_dt__date=log_date)
+        rest_breaks = RestBreak.objects.filter(trip__driver=driver, created_dt__date=log_date)
+        fuelings = Fueling.objects.filter(trip__driver=driver, created_dt__date=log_date)
 
-    # Initialize log data
-    log_data = {
-        "driver": {
-            "name": driver.name,
-            "license": driver.license_number,
-        },
-        "date": log_date,
-        "logs": [],
-        "trip_events": [],
-        "daily_recap": {
-            "total_driving_hours": 0,
-            "total_on_duty_hours": 0,
-            "hours_available_tomorrow": 14,  # Default value
-            "miles_driven": 0,
+        # Initialize log data structure
+        log_data = {
+            "driver": {
+                "name": driver.name,
+                "license": driver.license_number,
+            },
+            "date": log_date,
+            "logs": [],
+            "trip_events": [],
+            "daily_recap": {
+                "total_driving_hours": 0,
+                "total_on_duty_hours": 0,
+                "hours_available_tomorrow": 14,  # Default value
+                "miles_driven": 0,
+            },
+            "total_hours": {
+                "Off Duty": 0,
+                "Sleeper Berth": 0,
+                "Driving": 0,
+                "On Duty": 0,
+            },
+            "remarks": [],
         }
-    }
 
-    # Process HOS logs
-    for log in hos_logs:
-        log_data["daily_recap"]["total_driving_hours"] += log.total_driving_hours
-        log_data["daily_recap"]["total_on_duty_hours"] += log.total_on_duty_hours
+        # Process trips
+        for trip in trips:
+            # Add trip start event
+            log_data["trip_events"].append({
+                "type": "Trip Start",
+                "timestamp": trip.start_dt.isoformat(),
+                "location": trip.start_location.name,
+                "odometer": trip.vehicle.current_mileage,
+            })
 
-        # Add driving and on-duty logs
-        log_data["logs"].append({
-            "startHour": log.start_dt.hour,
-            "endHour": log.end_dt.hour if log.end_dt else log.start_dt.hour + int(log.total_driving_hours),
-            "status": "Driving"
-        })
-        log_data["logs"].append({
-            "startHour": log.start_dt.hour,
-            "endHour": log.end_dt.hour if log.end_dt else log.start_dt.hour + int(log.total_on_duty_hours),
-            "status": "On Duty"
-        })
+            # Add trip end event
+            if trip.end_dt:
+                log_data["trip_events"].append({
+                    "type": "Trip End",
+                    "timestamp": trip.end_dt.isoformat(),
+                    "location": trip.end_location.name,
+                    "odometer": trip.vehicle.current_mileage,
+                })
 
-    # Process trips
-    for trip in trips:
-        # Trip Start
-        log_data["trip_events"].append({
-            "type": "Trip Start",
-            "timestamp": trip.start_dt.isoformat(),
-            "location": serialize_location(trip.start_location),
-            "odometer": trip.vehicle.current_mileage,
-        })
+            # Add driving hours to daily recap
+            driving_hours = trip.total_driving_hours()
+            log_data["daily_recap"]["total_driving_hours"] += driving_hours
+            log_data["total_hours"]["Driving"] += driving_hours
 
-        # Rest Breaks
-        for rest in trip.restbreaks.all():
+            # Add on-duty hours to daily recap
+            on_duty_hours = trip.total_on_duty_hours()
+            log_data["daily_recap"]["total_on_duty_hours"] += on_duty_hours
+            log_data["total_hours"]["On Duty"] += on_duty_hours
+
+            # Add miles driven
+            log_data["daily_recap"]["miles_driven"] += trip.distance
+
+            # Add remarks for trip locations
+            log_data["remarks"].append(trip.start_location.name)
+            log_data["remarks"].append(trip.end_location.name)
+
+        # Process rest breaks
+        for rest in rest_breaks:
+            # Add rest break event
             log_data["trip_events"].append({
                 "type": "Rest Break",
                 "timestamp": rest.start_dt.isoformat(),
-                "location": serialize_location(rest.location),
-                "odometer": trip.vehicle.current_mileage,
+                "location": rest.location.name,
+                "odometer": rest.trip.vehicle.current_mileage,
             })
 
-        # Fueling Events
-        for fuel in trip.fuelings.all():
+            # Add rest break hours to total hours
+            rest_hours = rest.duration / 60 if rest.duration else 0  # Convert minutes to hours
+            log_data["total_hours"]["Sleeper Berth"] += rest_hours
+
+        # Process fuelings
+        for fuel in fuelings:
+            # Add fueling event
             log_data["trip_events"].append({
-                "type": "Fueling",
+                "type": "Fuel Stop",
                 "timestamp": fuel.created_dt.isoformat(),
-                "location": serialize_location(fuel.location),
+                "location": fuel.location.name,
                 "odometer": fuel.mileage_at_fueling,
             })
 
-        # Trip End
-        if trip.end_dt:
-            log_data["trip_events"].append({
-                "type": "Trip End",
-                "timestamp": trip.end_dt.isoformat(),
-                "location": serialize_location(trip.end_location),
-                "odometer": trip.vehicle.current_mileage,
+        # Generate logs based on duty status changes
+        log_data["logs"] = generate_duty_status_logs(driver, log_date)
+
+        # Format daily recap hours
+        log_data["daily_recap"]["total_driving_hours"] = f"{log_data['daily_recap']['total_driving_hours']} hrs"
+        log_data["daily_recap"]["total_on_duty_hours"] = f"{log_data['daily_recap']['total_on_duty_hours']} hrs"
+        log_data["daily_recap"]["miles_driven"] = f"{log_data['daily_recap']['miles_driven']} miles"
+
+        return Response(log_data)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# def generate_duty_status_logs(driver, log_date):
+#     """
+#     Generate logs based on duty status changes for the driver on the specified date.
+#     """
+#     logs = []
+#
+#     # Fetch all duty status changes for the driver on the specified date
+#     trips = Trip.objects.filter(driver=driver, start_dt__date=log_date).order_by('start_dt')
+#     rest_breaks = RestBreak.objects.filter(trip__driver=driver, start_dt__date=log_date).order_by('start_dt')
+#
+#     # Initialize variables to track duty status changes
+#     current_status = "Off Duty"
+#     current_start_time = None
+#
+#     # Process trips and rest breaks to generate logs
+#     for trip in trips:
+#         # Add Off Duty to Driving transition
+#         if current_status == "Off Duty":
+#             logs.append({
+#                 "startHour": current_start_time.hour if current_start_time else 0,
+#                 "endHour": trip.start_dt.hour,
+#                 "status": current_status,
+#             })
+#             current_status = "Driving"
+#             current_start_time = trip.start_dt
+#
+#         # Add Driving to On Duty transition (e.g., after pickup/drop-off)
+#         if trip.pickup_start_dt and trip.pickup_end_dt:
+#             logs.append({
+#                 "startHour": trip.start_dt.hour,
+#                 "endHour": trip.pickup_start_dt.hour,
+#                 "status": "Driving",
+#             })
+#             logs.append({
+#                 "startHour": trip.pickup_start_dt.hour,
+#                 "endHour": trip.pickup_end_dt.hour,
+#                 "status": "On Duty",
+#             })
+#             current_status = "Driving"
+#             current_start_time = trip.pickup_end_dt
+#
+#         # Add Driving to Off Duty transition (e.g., after trip ends)
+#         if trip.end_dt:
+#             logs.append({
+#                 "startHour": current_start_time.hour,
+#                 "endHour": trip.end_dt.hour,
+#                 "status": current_status,
+#             })
+#             current_status = "Off Duty"
+#             current_start_time = trip.end_dt
+#
+#     # Process rest breaks to add Sleeper Berth status
+#     for rest in rest_breaks:
+#         logs.append({
+#             "startHour": rest.start_dt.hour,
+#             "endHour": rest.end_dt.hour if rest.end_dt else rest.start_dt.hour + 3,  # Default 3 hours
+#             "status": "Sleeper Berth",
+#         })
+#
+#     # Add the final Off Duty status if needed
+#     if current_status != "Off Duty":
+#         logs.append({
+#             "startHour": current_start_time.hour,
+#             "endHour": 24,  # End of the day
+#             "status": current_status,
+#         })
+#
+#     return logs
+
+
+def generate_duty_status_logs(driver, log_date):
+    """
+    Generate logs based on duty status changes for the driver on the specified date.
+    """
+    logs = []
+
+    # Fetch all duty status changes for the driver on the specified date
+    trips = Trip.objects.filter(driver=driver, start_dt__date=log_date).order_by('start_dt')
+    rest_breaks = RestBreak.objects.filter(trip__driver=driver, start_dt__date=log_date).order_by('start_dt')
+
+    # Initialize variables to track duty status changes
+    current_status = "Off Duty"
+    current_start_time = None
+
+    # Process trips and rest breaks to generate logs
+    for trip in trips:
+        # Convert start and end times to quarter-hour precision
+        start_hour = trip.start_dt.hour + (trip.start_dt.minute / 60.0)
+        pickup_start_hour = trip.pickup_start_dt.hour + (trip.pickup_start_dt.minute / 60.0) if trip.pickup_start_dt else None
+        pickup_end_hour = trip.pickup_end_dt.hour + (trip.pickup_end_dt.minute / 60.0) if trip.pickup_end_dt else None
+        end_hour = trip.end_dt.hour + (trip.end_dt.minute / 60.0) if trip.end_dt else None
+
+        # Add Off Duty to Driving transition
+        if current_status == "Off Duty":
+            logs.append({
+                "startHour": current_start_time.hour + (current_start_time.minute / 60.0) if current_start_time else 0,
+                "endHour": start_hour,
+                "status": current_status,
             })
+            current_status = "Driving"
+            current_start_time = trip.start_dt
 
-    # Calculate miles driven (sum of trip distances)
-    log_data["daily_recap"]["miles_driven"] = sum(trip.distance for trip in trips)
+        # Add Driving to On Duty transition (e.g., after pickup/drop-off)
+        if trip.pickup_start_dt and trip.pickup_end_dt:
+            logs.append({
+                "startHour": start_hour,
+                "endHour": pickup_start_hour,
+                "status": "Driving",
+            })
+            logs.append({
+                "startHour": pickup_start_hour,
+                "endHour": pickup_end_hour,
+                "status": "On Duty",
+            })
+            current_status = "Driving"
+            current_start_time = trip.pickup_end_dt
 
-    return Response(log_data)
+        # Add Driving to Off Duty transition (e.g., after trip ends)
+        if trip.end_dt:
+            logs.append({
+                "startHour": current_start_time.hour + (current_start_time.minute / 60.0),
+                "endHour": end_hour,
+                "status": current_status,
+            })
+            current_status = "Off Duty"
+            current_start_time = trip.end_dt
+
+    # Process rest breaks to add Sleeper Berth status
+    for rest in rest_breaks:
+        rest_start_hour = rest.start_dt.hour + (rest.start_dt.minute / 60.0)
+        rest_end_hour = rest.end_dt.hour + (rest.end_dt.minute / 60.0) if rest.end_dt else rest_start_hour + 0.25  # Default 15 minutes
+
+        logs.append({
+            "startHour": rest_start_hour,
+            "endHour": rest_end_hour,
+            "status": "Sleeper Berth",
+        })
+
+    # Add the final Off Duty status if needed
+    if current_status != "Off Duty":
+        logs.append({
+            "startHour": current_start_time.hour + (current_start_time.minute / 60.0),
+            "endHour": 24.0,  # End of the day
+            "status": current_status,
+        })
+
+    return logs
+
 
 def serialize_location(location):
     if location:
