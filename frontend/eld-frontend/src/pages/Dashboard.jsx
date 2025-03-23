@@ -7,23 +7,23 @@ function Dashboard() {
         <Container>
             <PageTitle title="Dashboard"/>
 
-            {/* Trips Table */}
-            <TableContainer component={Paper} sx={{mt: 4}}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Latitude</TableCell>
-                            <TableCell>Longitude</TableCell>
-                            <TableCell>Address</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
+            {/*/!* Trips Table *!/*/}
+            {/*<TableContainer component={Paper} sx={{mt: 4}}>*/}
+            {/*    <Table>*/}
+            {/*        <TableHead>*/}
+            {/*            <TableRow>*/}
+            {/*                <TableCell>ID</TableCell>*/}
+            {/*                <TableCell>Name</TableCell>*/}
+            {/*                <TableCell>Latitude</TableCell>*/}
+            {/*                <TableCell>Longitude</TableCell>*/}
+            {/*                <TableCell>Address</TableCell>*/}
+            {/*            </TableRow>*/}
+            {/*        </TableHead>*/}
+            {/*        <TableBody>*/}
 
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            {/*        </TableBody>*/}
+            {/*    </Table>*/}
+            {/*</TableContainer>*/}
         </Container>
     );
 }

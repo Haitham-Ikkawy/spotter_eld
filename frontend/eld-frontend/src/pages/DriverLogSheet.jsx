@@ -227,13 +227,13 @@ const DriverLogSheet = () => {
                             <Typography>Miles Driven: {logData.daily_recap.miles_driven}</Typography>
                         </Box>
 
-                        {/* Remarks Section */}
-                        <Box sx={{mt: 4, p: 2, border: "1px solid #000", borderRadius: "8px"}}>
-                            <Typography variant="h6">Remarks</Typography>
-                            <Typography>1. Fuel Stop at Chicago, IL</Typography>
-                            <Typography>2. Rest Break at Indianapolis, IN</Typography>
-                            <Typography>3. End of Day at Columbus, OH</Typography>
-                        </Box>
+                        {/*/!* Remarks Section *!/*/}
+                        {/*<Box sx={{mt: 4, p: 2, border: "1px solid #000", borderRadius: "8px"}}>*/}
+                        {/*    <Typography variant="h6">Remarks</Typography>*/}
+                        {/*    <Typography>1. Fuel Stop at Chicago, IL</Typography>*/}
+                        {/*    <Typography>2. Rest Break at Indianapolis, IN</Typography>*/}
+                        {/*    <Typography>3. End of Day at Columbus, OH</Typography>*/}
+                        {/*</Box>*/}
                     </Box>
                 </>
             }
