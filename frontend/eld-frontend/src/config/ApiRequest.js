@@ -1,8 +1,8 @@
 import axios from "axios";
 import { toast } from "react-toastify"; // Import toast notifications
 
-const BASE_URL = "http://127.0.0.1:8000/api/";
-// const BASE_URL = "https://haithamakk.pythonanywhere.com/api/";
+// const BASE_URL = "http://127.0.0.1:8000/api/";
+const BASE_URL = "https://haithamakk.pythonanywhere.com/api/";
 
 const ApiRequest = axios.create({
     baseURL: BASE_URL,
