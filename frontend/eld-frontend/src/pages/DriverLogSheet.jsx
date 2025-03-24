@@ -18,7 +18,7 @@ const DriverLogSheet = () => {
 
 
     const [logData, setLoggData] = useState(null);
-    const [queryParams, setQueryParams] = useState({date:new Date().toISOString().split("T")[0] });
+    const [queryParams, setQueryParams] = useState({date: new Date().toISOString().split("T")[0]});
 
 
     useEffect(() => {
@@ -154,7 +154,8 @@ const DriverLogSheet = () => {
             {/* Current Cycle Used */}
             <TextField type="date"
                 // inputProps={{min: 0, max: 100}} // Sets UI constraints
-                       label="" placeholder={""} name="date" value={queryParams.date} onChange={handleInputChange} fullWidth margin="normal" required/>
+                       label="" placeholder={""} name="date" value={queryParams.date} onChange={handleInputChange} fullWidth margin="normal"
+                       sx={{width: "50%"}}/>
             {logData &&
                 <>
                     <Box sx={{textAlign: "center", mt: 4}}>

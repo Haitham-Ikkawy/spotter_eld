@@ -136,6 +136,7 @@ def create_rest_break(request):
 @permission_classes([IsAuthenticated])
 def end_rest_break(request):
     try:
+        _now = now()
 
         data = request.data.copy()
 
@@ -149,13 +150,12 @@ def end_rest_break(request):
 
 
         # Calculate rest_break duration
-        rest_break.end_dt = now()
-        rest_break_duration = (rest_break.start_dt - rest_break.end_dt).total_seconds() / 3600  # Convert to hours
-        rest_break.pickup_duration = max(1.0, round(rest_break_duration, 2))  # Minimum 1 hour
+        rest_break.end_dt = _now
+        rest_break.duration = (_now - rest_break.end_dt).total_seconds() / 60  # Convert to hours
         rest_break.save()
 
         return Response(
-            {"message": "Rest Break ended successfully.", "rest_break": rest_break.pickup_duration},
+            {"message": "Rest Break ended successfully.", "rest_break": rest_break.duration},
             status=status.HTTP_200_OK
         )
 

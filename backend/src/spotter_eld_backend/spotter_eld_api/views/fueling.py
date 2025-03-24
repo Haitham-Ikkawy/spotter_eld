@@ -101,6 +101,5 @@ def create_fueling(request):
 urls = [
     path('get_fueling', get_fueling, name='get_fueling'),
     path('get_fueling_form_data', get_fueling_form_data, name='get_fueling_form_data'),
-    path('create_fueling', create_fueling, name='create_fueling'),
-    # path('update_fueling', update_fueling, name='update_fueling'),
+    path('create_fueling', create_fueling, name='create_fueling')
 ]

@@ -225,9 +225,9 @@ function RestBreaks() {
                     </FormControl>
 
 
-                    <TextField type="number"
-                        // inputProps={{min: 0, max: 100}} // Sets UI constraints
-                               label="duration" name="duration" value={newRestBreak.duration} onChange={handleInputChange} fullWidth margin="normal" required/>
+                    {/*<TextField type="number"*/}
+                    {/*    // inputProps={{min: 0, max: 100}} // Sets UI constraints*/}
+                    {/*           label="duration" name="duration" value={newRestBreak.duration} onChange={handleInputChange} fullWidth margin="normal" required/>*/}
 
                     <Button type="submit" variant="contained" color="primary" sx={{mt: 2}} disabled={submitting}>
                         {submitting ? <><CircularProgress size={10} sx={{color: "#1976d2"}}/> Add Rest break</> : "Add Rest break"}
