@@ -16,6 +16,8 @@ function Fuelings() {
     const [trips, setTrips] = useState([]);
 
     const [loading, setLoading] = useState(true); // Add a loading state
+
+    const [submitting, setSubmitting] = useState(false); // New state for tracking API call
     const MAX_HOURS = 70;
 
     const [newFueling, setNewFueling] = useState({
@@ -87,17 +89,29 @@ function Fuelings() {
             return;
         }
 
+
+        setSubmitting(true); // Disable button and show loader
+
         try {
             insertFueling(newFueling)
                 .then((response) => {
                     toast.success(Constants.TOASTS.SUCCESS.FUEL_STOP_CREATION_SUCCESS);
-
                     setModalOpened(false);
+                    setNewFueling({
+                        trip: "",
+                        location: "",
+                        amount: "",
+                        cost: "",
+                        mileage_at_fueling: "",
+                    })
                     getFuelingFn()
                 })
                 .catch((error) => {
                     toast.error(error.response);
-                });
+                }).finally(() => {
+
+                setSubmitting(false); // Disable button and show loader
+            })
         } catch (error) {
             toast.error(Constants.TOASTS.ERROR.FUEL_STOP_CREATION_FAILED);
         }
@@ -197,8 +211,10 @@ function Fuelings() {
                         // inputProps={{min: 0, max: 100}} // Sets UI constraints
                                label="current mileage" name="mileage_at_fueling" value={newFueling.mileage_at_fueling} onChange={handleInputChange} fullWidth margin="normal" required/>
 
-                    <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
-                        Add Fuel Stop
+                    <Button type="submit" variant="contained" color="primary" sx={{mt: 2}} disabled={submitting}>
+
+
+                        {submitting ? <><CircularProgress size={10} sx={{color: "#1976d2"}}/> Add Fuel Stop</> : " Add Fuel Stop"}
                     </Button>
                 </Box>
             </ModalLayout>

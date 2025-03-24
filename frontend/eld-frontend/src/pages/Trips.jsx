@@ -60,6 +60,7 @@ function Trips() {
     const [canDriverCreateTrips, setCanDriverCreateTrips] = useState(false);
     const [serverMapTrace, setServerMapTrace] = useState(null);
     const [loading, setLoading] = useState(true); // Add a loading state
+    const [submitting, setSubmitting] = useState(false); // New state for tracking API call
     const MAX_HOURS = 70;
 
     const [newTrip, setNewTrip] = useState({
@@ -159,20 +160,35 @@ function Trips() {
             return;
         }
 
-        try {
-            insertTrips(newTrip)
-                .then((response) => {
-                    toast.success(Constants.TOASTS.SUCCESS.TRIP_CREATION_SUCCESS);
-                    setModalOpened(false);
-                    getTripsFn()
+
+        setSubmitting(true); // Disable button and show loader
+
+        // try {
+        insertTrips(newTrip)
+            .then((response) => {
+                toast.success(Constants.TOASTS.SUCCESS.TRIP_CREATION_SUCCESS);
+                setModalOpened(false);
+                setNewTrip({
+                    driver: "",
+                    vehicle: "",
+                    start_location: "",
+                    end_location: "",
+                    distance: "",
+                    current_cycle_used: 0,
                 })
-                .catch((error) => {
-                    toast.error(error.response);
-                });
-            //
-        } catch (error) {
-            toast.error(Constants.TOASTS.ERROR.TRIP_CREATION_FAILED);
-        }
+                getTripsFn()
+
+            })
+            .catch((error) => {
+                toast.error(error.response);
+            }).finally(() => {
+
+            setSubmitting(false); // Disable button and show loader
+        })
+        //
+        // } catch (error) {
+        //     toast.error(Constants.TOASTS.ERROR.TRIP_CREATION_FAILED);
+        // }
     };
     const handleMenuClick = (event, trip) => {
         setAnchorEl(event.currentTarget);
@@ -348,8 +364,8 @@ function Trips() {
                         <TextField label="Current Cycle Used (Hrs)" name="current_cycle_used" value={currentCycleUsed} onChange={handleInputChange} fullWidth margin="normal" required
                                    disabled/>
 
-                        <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
-                            Start Trip
+                        <Button type="submit" variant="contained" color="primary" sx={{mt: 2}} disabled={submitting}>
+                            {submitting ? <><CircularProgress size={10} sx={{color: "#1976d2"}}/> Start Trip</> : "Start Trip"}
                         </Button>
                     </Box>
                 </ModalLayout>

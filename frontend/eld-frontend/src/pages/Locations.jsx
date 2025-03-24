@@ -26,6 +26,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModalLayout from "../components/modals/ModalLayout.jsx";
 import MapModal from "../components/modals/MapModal.jsx";
 import MapViewModal from "../components/modals/MapViewModal.jsx";
+import Constants from "../common/constants.js";
 
 function Locations() {
     const [locations, setLocations] = useState([]);
@@ -35,6 +36,7 @@ function Locations() {
     const [viewLocation, setViewLocation] = useState(null);
 
     const [loading, setLoading] = useState(true); // Add a loading state
+    const [submitting, setSubmitting] = useState(false); // New state for tracking API call
 
     const [newLocation, setNewLocation] = useState({
         name: "",
@@ -45,6 +47,11 @@ function Locations() {
     });
 
     useEffect(() => {
+        getLocationFn()
+    }, []);
+
+    const getLocationFn = () => {
+
         getLocation({})
             .then((response) => {
                 setLocations(response.data);
@@ -55,8 +62,7 @@ function Locations() {
 
             setLoading(false); // Stop loading
         })
-
-    }, []);
+    }
 
 
     useEffect(() => {
@@ -71,16 +77,31 @@ function Locations() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        setSubmitting(true); // Disable button and show loader
         try {
-            setModalOpened(false);
 
             insertLocation(newLocation)
                 .then((response) => {
-                    setLocations([...locations, response.data]);
+
+                    toast.success(Constants.TOASTS.SUCCESS.LOCATION_CREATION_SUCCESS);
+
+                    setModalOpened(false);
+                    setNewLocation({
+                        name: "",
+                        latitude: "",
+                        longitude: "",
+                        address: "",
+                        type: ""
+                    })
+                    getLocationFn()
                 })
                 .catch((error) => {
                     toast.error(error.response);
-                });
+                }).finally(() => {
+
+                setSubmitting(false); // Disable button and show loader
+            })
         } catch (error) {
             console.error(error);
         }
@@ -156,9 +177,10 @@ function Locations() {
                             variant="contained"
                             color="primary"
                             sx={{width: "40%"}}
-                            disabled={!newLocation.latitude || !newLocation.longitude} // Disable until location is selected
+                            disabled={(!newLocation.latitude || !newLocation.longitude)||submitting} // Disable until location is selected
                         >
-                            Save
+
+                            {submitting ? <><CircularProgress size={10} sx={{color: "#1976d2"}}/> Save</> : "Save"}
                         </Button>
 
                     </Box>

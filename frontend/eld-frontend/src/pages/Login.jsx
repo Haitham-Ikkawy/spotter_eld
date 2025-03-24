@@ -26,11 +26,7 @@ function Login() {
                 setIsAuth(true);
             })
             .catch((error) => {
-                try {
-                    toast.error(JSON.stringify(error.response.data));
-                } catch (error) {
-                    toast.error(Constants.MESSAGES.UNKNOWN_ERROR);
-                }
+
             });
 
 

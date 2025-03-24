@@ -40,6 +40,8 @@ function RestBreaks() {
     const [selectedRestBreak, setSelectedRestBreak] = useState(null);
 
     const [loading, setLoading] = useState(true); // Add a loading state
+
+    const [submitting, setSubmitting] = useState(false); // New state for tracking API call
     const MAX_HOURS = 70;
 
     const [newRestBreak, setNewRestBreak] = useState({
@@ -104,6 +106,8 @@ function RestBreaks() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        setSubmitting(true); // Disable button and show loader
+
         try {
             insertRestBreak(newRestBreak)
                 .then((response) => {
@@ -114,7 +118,10 @@ function RestBreaks() {
                 })
                 .catch((error) => {
                     toast.error(error.response);
-                });
+                }).finally(() => {
+
+                setSubmitting(false); // Disable button and show loader
+            })
         } catch (error) {
 
             toast.error(Constants.TOASTS.ERROR.FUEL_STOP_CREATION_FAILED);
@@ -222,8 +229,8 @@ function RestBreaks() {
                         // inputProps={{min: 0, max: 100}} // Sets UI constraints
                                label="duration" name="duration" value={newRestBreak.duration} onChange={handleInputChange} fullWidth margin="normal" required/>
 
-                    <Button type="submit" variant="contained" color="primary" sx={{mt: 2}}>
-                        Add Fuel Stop
+                    <Button type="submit" variant="contained" color="primary" sx={{mt: 2}} disabled={submitting}>
+                        {submitting ? <><CircularProgress size={10} sx={{color: "#1976d2"}}/> Add Rest break</> : "Add Rest break"}
                     </Button>
                 </Box>
             </ModalLayout>
